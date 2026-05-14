@@ -1,0 +1,13 @@
+{
+  "private": true,
+  "name": "mvp-prod-ready-demo",
+  "version": "1.0.0",
+  "scripts": {
+    "dev:api": "npm run dev --workspace=apps/api",
+    "dev:web": "npm run dev --workspace=apps/web",
+    "build": "npm run build --workspace=apps/api",
+    "test": "npm run test --workspace=apps/api",
+    "typecheck": "npm run typecheck --workspace=apps/api"
+  },
+  "workspaces": ["apps/*", "packages/*"]
+}

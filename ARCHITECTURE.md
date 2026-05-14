@@ -1,5 +1,7 @@
 # Docker Nginx Let's Encrypt Architecture
 
+This architecture shows patterns for a single-server Docker Compose deployment suitable for MVPs and small projects.
+
 ## System Architecture
 
 ```
@@ -90,7 +92,6 @@
 - Data persistence
 - ACID transactions
 - Query execution
-- Backup storage
 
 ### Redis Container
 - **Image**: redis:7-alpine
@@ -103,7 +104,6 @@
 - Session storage
 - Cache layer
 - Queue management
-- Real-time data
 
 ### Certbot Container
 - **Image**: certbot/certbot:latest
@@ -202,7 +202,6 @@
 Strict-Transport-Security: max-age=31536000
 X-Content-Type-Options: nosniff
 X-Frame-Options: SAMEORIGIN
-X-XSS-Protection: 1; mode=block
 Referrer-Policy: strict-origin-when-cross-origin
 Content-Security-Policy: default-src 'self'
 Permissions-Policy: camera=(), microphone=(), geolocation=()
@@ -228,17 +227,6 @@ Permissions-Policy: camera=(), microphone=(), geolocation=()
 - **certbot/conf**: SSL certificates
 - **certbot/www**: ACME challenge files
 
-### Backup Strategy
-```
-Daily Backups:
-├─ PostgreSQL dump
-├─ Redis snapshot
-└─ SSL certificates
-
-Retention: 7 days
-Location: /backups (mount external storage)
-```
-
 ## Monitoring & Logging
 
 ### Health Checks
@@ -252,95 +240,6 @@ Location: /backups (mount external storage)
 - **App**: stdout (Docker logs)
 - **PostgreSQL**: stdout (Docker logs)
 - **Redis**: stdout (Docker logs)
-
-### Metrics
-- **Prometheus**: /metrics endpoint
-- **Grafana**: Dashboard visualization
-- **CloudWatch**: AWS integration (optional)
-
-## Performance Optimization
-
-### Caching Strategy
-```
-Static Files (CSS, JS, Images):
-├─ Browser Cache: 30 days
-├─ Nginx Cache: 30 days
-└─ Gzip Compression: Enabled
-
-API Responses:
-├─ Redis Cache: 1 hour (configurable)
-├─ Nginx Proxy Cache: 5 minutes
-└─ Browser Cache: No-cache
-
-Database Queries:
-├─ Redis Cache: 1 hour
-├─ Connection Pool: 10 connections
-└─ Query Optimization: Indexes
-```
-
-### Resource Limits
-```
-Total System:
-├─ Memory: 2.5 GB
-├─ CPU: 2.25 cores
-└─ Disk: Unlimited (mount external)
-
-Per Container:
-├─ Nginx: 256MB / 0.5 CPU
-├─ App: 1GB / 1.0 CPU
-├─ PostgreSQL: 512MB / 0.5 CPU
-└─ Redis: 256MB / 0.25 CPU
-```
-
-## Scaling Considerations
-
-### Horizontal Scaling
-```
-Load Balancer
-    │
-    ├─ App Instance 1
-    ├─ App Instance 2
-    └─ App Instance N
-
-Shared:
-├─ PostgreSQL (RDS)
-├─ Redis (ElastiCache)
-└─ Nginx (ALB)
-```
-
-### Vertical Scaling
-- Increase container memory limits
-- Increase CPU allocation
-- Upgrade instance type
-- Increase database resources
-
-## Disaster Recovery
-
-### RTO/RPO Targets
-- **RTO**: < 15 minutes
-- **RPO**: < 1 hour
-
-### Recovery Procedures
-1. **Container Failure**: Docker restart (automatic)
-2. **Data Loss**: Restore from backup
-3. **Certificate Expiry**: Certbot auto-renewal
-4. **Complete Failure**: Redeploy from docker-compose
-
-## Cost Estimation
-
-### Monthly Costs (AWS)
-| Component | Cost |
-|-----------|------|
-| EC2 Instance (t4g.micro) | $6.13 |
-| EBS Volume (20GB) | $1.60 |
-| Data Transfer | $0.50 |
-| **Total** | **~$8.23** |
-
-### Cost Optimization
-- Use spot instances for non-critical
-- Reserved instances for production
-- S3 for backup storage
-- CloudFront for static files
 
 ## References
 

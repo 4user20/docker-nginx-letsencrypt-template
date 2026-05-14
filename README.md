@@ -1,8 +1,8 @@
 # Docker Nginx Let's Encrypt Template
 
-> Production-ready Docker Compose template with Nginx reverse proxy, automatic SSL certificates, and comprehensive security headers
+Docker Compose + Nginx template for deploying small MVPs on a VPS with HTTPS via Let's Encrypt.
 
-## 🏗️ Architecture
+## Architecture
 
 ```
 Internet
@@ -15,44 +15,25 @@ Nginx :80/:443 (SSL Let's Encrypt)
     └── Redis :6379
 ```
 
-## ✨ Features
-
-- ✅ **Nginx Reverse Proxy** with security headers
-- ✅ **Automatic SSL** with Let's Encrypt
-- ✅ **Rate Limiting** for API protection
-- ✅ **Health Checks** for all services
-- ✅ **PostgreSQL + Redis** for data persistence
-- ✅ **Docker Multi-stage builds** for optimization
-- ✅ **Log rotation** and monitoring
-
-## 📋 Prerequisites
+## Prerequisites
 
 - Docker >= 20.10
 - Docker Compose >= 2.0
 - Domain name pointing to your server
 
-## 🚀 Quick Start
+## Quick Start
 
 ```bash
-# Clone the repository
 git clone https://github.com/yourusername/docker-nginx-letsencrypt-template.git
 cd docker-nginx-letsencrypt-template
-
-# Configure environment
 cp .env.example .env
-# Edit .env with your settings
-
-# Start services
+# Edit .env with your domain and email
 docker compose up -d
-
-# Check status
 docker compose ps
-
-# View logs
 docker compose logs -f
 ```
 
-## ⚙️ Configuration
+## Configuration
 
 ### Environment Variables
 
@@ -73,63 +54,43 @@ DOMAIN=yourdomain.com
 EMAIL=your@email.com
 ```
 
-## 🔒 Security Headers
+## Security Headers
 
-Configured security headers:
+Basic security headers included:
 
 ```nginx
 X-Content-Type-Options: nosniff
 X-Frame-Options: SAMEORIGIN
-X-XSS-Protection: 1; mode=block
 Referrer-Policy: strict-origin-when-cross-origin
 Content-Security-Policy: default-src 'self'
 Strict-Transport-Security: max-age=31536000
+Permissions-Policy: camera=(), microphone=(), geolocation=()
 ```
 
-## 🛡️ Rate Limiting
+These are reasonable defaults for an MVP. Adapt them to your application's specific needs before production use.
+
+## Rate Limiting
 
 - **API endpoints**: 100 requests/second
 - **Auth endpoints**: 60 requests/minute
 - **Customizable** per location block
 
-## 📊 Monitoring
-
-Health check endpoints:
+## Health Checks
 
 - `/health` - Application health
-- `/metrics` - Prometheus metrics
+- `/metrics` - Application metrics
 
-## 🧪 Testing
+## Testing
 
 ```bash
 # Test Nginx configuration
 docker compose exec nginx nginx -t
 
-# Security scan
-docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
-  aquasec/trivy image your-app:latest
-
 # Health check
 curl https://yourdomain.com/health
 ```
 
-## 📝 Case Study
-
-**Challenge**: Web application needed production-ready deployment with SSL, security hardening, and zero-downtime updates.
-
-**Solution**: Implemented Docker Compose stack with:
-- Nginx reverse proxy with automatic SSL renewal
-- Security headers and rate limiting
-- Health checks and graceful shutdown
-- Multi-stage Docker builds for optimization
-
-**Result**:
-- 🔒 A+ SSL rating on SSL Labs
-- ⚡ 50% faster deployment with Docker caching
-- 🛡️ Zero security incidents with rate limiting
-- 📈 99.9% uptime with health checks
-
-## 🔄 SSL Certificate Renewal
+## SSL Certificate Renewal
 
 Certificates auto-renew via cron:
 
@@ -141,14 +102,20 @@ docker compose run --rm certbot renew
 docker compose exec nginx nginx -s reload
 ```
 
-## 📄 License
+## Limitations
 
-MIT License - feel free to use this template for your projects!
+- This is a portfolio/starter template, not a production-hardened deployment.
+- No A+ SSL rating has been tested on this template.
+- No uptime guarantees are implied or tested.
+- Rate limits and security headers are basic defaults — adapt them before production use.
+- This is a single-server setup; no clustering, load balancing, or HA is included.
 
-## 🤝 Contributing
+## Portfolio
 
-Contributions welcome! Please open an issue or submit a pull request.
+This repository is part of a DevOps portfolio demonstrating Docker Compose, Nginx, and HTTPS deployment patterns for small MVP projects.
 
----
+I use this template as a base for small MVP deployments on VPS: Docker Compose stack, Nginx reverse proxy, HTTPS/Let's Encrypt flow, PostgreSQL/Redis, healthchecks, logs, and basic hardening. It is a practical starting point that I adapt to each project's specific requirements.
 
-**Author**: DevOps Engineer | [Portfolio](https://yourportfolio.com) | [LinkedIn](https://linkedin.com/in/yourprofile)
+## License
+
+MIT License

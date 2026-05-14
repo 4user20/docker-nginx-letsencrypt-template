@@ -1,0 +1,91 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  name         String
+  role         String   @default("user")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  leads        Lead[]
+
+  @@map("users")
+}
+
+model Lead {
+  id          String   @id @default(cuid())
+  title       String
+  source      String   @default("manual")
+  budgetText  String?  @map("budget_text")
+  stackText   String?  @map("stack_text")
+  description String?
+  status      String   @default("new")
+  fitScore    Int      @default(0) @map("fit_score")
+  redFlags    String?  @map("red_flags")
+  notes       String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  userId      String   @map("user_id")
+  user        User     @relation(fields: [userId], references: [id])
+  scores      LeadScore[]
+
+  @@map("leads")
+}
+
+model LeadScore {
+  id        String   @id @default(cuid())
+  leadId    String   @map("lead_id")
+  lead      Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  score     Int
+  reasons   String[]
+  redFlags  String[] @map("red_flags")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("lead_scores")
+}
+
+model ChecklistTemplate {
+  id          String          @id @default(cuid())
+  name        String
+  category    String
+  description String
+  createdAt   DateTime        @default(now()) @map("created_at")
+  items       ChecklistItem[]
+
+  @@map("checklist_templates")
+}
+
+model ChecklistItem {
+  id          String           @id @default(cuid())
+  templateId  String           @map("template_id")
+  template    ChecklistTemplate @relation(fields: [templateId], references: [id])
+  title       String
+  description String?
+  severity    String           @default("medium")
+  status      String           @default("not_checked")
+  evidence    String?
+  createdAt   DateTime         @default(now()) @map("created_at")
+  updatedAt   DateTime         @updatedAt @map("updated_at")
+
+  @@map("checklist_items")
+}
+
+model DeploymentEvent {
+  id          String   @id @default(cuid())
+  environment String
+  version     String
+  commitSha   String   @map("commit_sha")
+  status      String   @default("pending")
+  message     String?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("deployment_events")
+}
