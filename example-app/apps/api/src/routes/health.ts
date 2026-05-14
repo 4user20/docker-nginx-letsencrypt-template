@@ -8,7 +8,6 @@ async function healthRoutes(app: FastifyInstance) {
       status: "ok",
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
-      memory: process.memoryUsage().heapUsed,
     }
   })
 
@@ -24,7 +23,6 @@ async function healthRoutes(app: FastifyInstance) {
     return {
       status: dbConnected ? "ok" : "degraded",
       database: dbConnected ? "connected" : "disconnected",
-      timestamp: new Date().toISOString(),
     }
   })
 }

@@ -1,173 +1,153 @@
-const BASE_URL = import.meta.env.VITE_API_URL || ''
+// ──────────────────────────────────────────────
+// SlotPay Studio API client
+// ──────────────────────────────────────────────
 
-function getToken(): string | null {
-  return localStorage.getItem('token')
+import type { BookingStatus } from "@/providers/BookingsProvider";
+
+// ── Types matching the backend contract ────────
+
+export interface DemoUser {
+  id: string;
+  name: string;
+  email: string;
+  workspaceId: string;
 }
+
+export interface Service {
+  id: string;
+  titleRu: string;
+  titleEn: string;
+  descRu: string;
+  descEn: string;
+  priceFromRub: number;
+  depositRub: number;
+}
+
+export interface Booking {
+  id: string;
+  workspaceId: string;
+  clientName: string;
+  clientEmail: string;
+  clientPhone: string;
+  serviceId: string;
+  date: string;
+  time: string;
+  amountRub: number;
+  status: BookingStatus;
+  paymentId?: string;
+  idempotencyKey?: string;
+  createdAt: number;
+}
+
+export interface CreateBookingData {
+  clientName: string;
+  clientEmail: string;
+  clientPhone: string;
+  serviceId: string;
+  date: string;
+  time: string;
+  amountRub: number;
+  status: BookingStatus;
+}
+
+export interface StatsData {
+  todayCount: number;
+  paidCount: number;
+  conversion: number;
+  avgTicket: number;
+  revenueByService: { serviceId: string; amount: number }[];
+}
+
+// ── Auth response types ────────────────────────
+
+interface AuthResponse {
+  token: string;
+  user: DemoUser;
+}
+
+// ── API client ─────────────────────────────────
+
+const BASE_URL = import.meta.env.VITE_API_URL || "";
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const token = getToken()
+  const token = localStorage.getItem("token");
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
     ...(options.headers as Record<string, string>),
-  }
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`
-  }
-  const res = await fetch(`${BASE_URL}${path}`, { ...options, headers })
+  };
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+  const res = await fetch(`${BASE_URL}${path}`, { ...options, headers });
   if (!res.ok) {
-    const body = await res.text()
-    throw new Error(body || `Request failed: ${res.statusText}`)
+    const body = await res.text();
+    throw new Error(body || `Request failed: ${res.statusText}`);
   }
-  const text = await res.text()
-  return (text ? JSON.parse(text) : {}) as T
+  const text = await res.text();
+  return text ? JSON.parse(text) : ({} as T);
 }
 
-export interface User {
-  id: string
-  email: string
-  name: string
-  role: string
-}
+// ── Auth ───────────────────────────────────────
 
-export interface Lead {
-  id: string
-  title: string
-  source: string
-  budgetText: string
-  stackText: string
-  description: string
-  status: string
-  fitScore: number | null
-  redFlags: string
-  notes: string
-  createdAt: string
-  updatedAt: string
-}
+export const login = (email: string) =>
+  request<AuthResponse>("/api/auth/login", {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  });
 
-export interface ScoreResult {
-  score: number
-  reasons: string[]
-  redFlags: string[]
-}
+export const demoLogin = () =>
+  request<AuthResponse>("/api/auth/demo-login", {
+    method: "POST",
+    body: JSON.stringify({}),
+  });
 
-export interface ChecklistTemplate {
-  id: string
-  name: string
-  category: string
-  description: string
-  items: ChecklistItem[]
-}
-
-export interface ChecklistItem {
-  id: string
-  title: string
-  description: string
-  severity: string
-  status: 'pass' | 'warning' | 'fail' | 'not_checked'
-  evidence: string
-  category: string
-}
-
-export interface DeploymentInfo {
-  version: string
-  commitSha: string
-  environment: string
-  uptime: number
-  dbStatus: string
-  redisStatus: string
-}
-
-export interface HealthInfo {
-  status: string
-  timestamp: string
-  uptime: number
-}
-
-export interface LoginResponse {
-  token: string
-  user: User
-}
-
-export interface PaginatedLeads {
-  leads: Lead[]
-}
-
-export interface RegisterData {
-  name: string
-  email: string
-  password: string
-}
-
-export async function register(data: RegisterData): Promise<LoginResponse> {
-  return request<LoginResponse>('/api/auth/register', {
-    method: 'POST',
+export const register = (data: { name: string; email: string; password: string }) =>
+  request<AuthResponse>("/api/auth/register", {
+    method: "POST",
     body: JSON.stringify(data),
-  })
-}
+  });
 
-export async function login(email: string, password: string): Promise<LoginResponse> {
-  return request<LoginResponse>('/api/auth/login', {
-    method: 'POST',
-    body: JSON.stringify({ email, password }),
-  })
-}
+export const getMe = () => request<DemoUser>("/api/me");
 
-export async function getMe(): Promise<User> {
-  return request<User>('/api/me')
-}
+export const logout = () =>
+  request<void>("/api/auth/logout", {
+    method: "POST",
+  });
 
-export async function getLeads(params?: {
-  status?: string
-  source?: string
-  search?: string
-}): Promise<PaginatedLeads> {
-  const qs = new URLSearchParams()
-  if (params?.status) qs.set('status', params.status)
-  if (params?.source) qs.set('source', params.source)
-  if (params?.search) qs.set('search', params.search)
-  const query = qs.toString()
-  return request<PaginatedLeads>(`/api/leads${query ? `?${query}` : ''}`)
-}
+// ── Services ───────────────────────────────────
 
-export async function createLead(data: Partial<Lead>): Promise<{ lead: Lead }> {
-  return request<{ lead: Lead }>('/api/leads', {
-    method: 'POST',
+export const getServices = () =>
+  request<{ services: Service[] }>("/api/services");
+
+// ── Bookings ───────────────────────────────────
+
+export const getBookings = (params?: { status?: string; search?: string }) => {
+  const qs = new URLSearchParams();
+  if (params?.status) qs.set("status", params.status);
+  if (params?.search) qs.set("search", params.search);
+  const q = qs.toString();
+  return request<{ bookings: Booking[] }>(`/api/bookings${q ? `?${q}` : ""}`);
+};
+
+export const createBooking = (data: CreateBookingData) =>
+  request<{ booking: Booking; idempotencyKey: string }>("/api/bookings", {
+    method: "POST",
     body: JSON.stringify(data),
-  })
-}
+  });
 
-export async function updateLead(id: string, data: Partial<Lead>): Promise<{ lead: Lead }> {
-  return request<{ lead: Lead }>(`/api/leads/${id}`, {
-    method: 'PATCH',
-    body: JSON.stringify(data),
-  })
-}
+export const updateBookingStatus = (id: string, status: string) =>
+  request<{ booking: Booking }>(`/api/bookings/${id}/status`, {
+    method: "PATCH",
+    body: JSON.stringify({ status }),
+  });
 
-export async function scoreLead(id: string): Promise<ScoreResult> {
-  return request<ScoreResult>(`/api/leads/${id}/score`, {
-    method: 'POST',
-  })
-}
+export const payBooking = (id: string, idempotencyKey: string) =>
+  request<{ paymentId: string; idempotencyKey: string; status: string }>(
+    `/api/bookings/${id}/pay`,
+    {
+      method: "POST",
+      body: JSON.stringify({ idempotencyKey }),
+    },
+  );
 
-export async function getChecklists(): Promise<{ templates: ChecklistTemplate[] }> {
-  return request<{ templates: ChecklistTemplate[] }>('/api/checklists')
-}
+// ── Stats ──────────────────────────────────────
 
-export async function updateChecklistItem(data: {
-  itemId: string
-  status: string
-  evidence: string
-}): Promise<{ item: ChecklistItem }> {
-  return request<{ item: ChecklistItem }>('/api/checklists', {
-    method: 'POST',
-    body: JSON.stringify(data),
-  })
-}
-
-export async function getDeploymentStatus(): Promise<DeploymentInfo> {
-  return request<DeploymentInfo>('/api/deployments/status')
-}
-
-export async function getHealth(): Promise<HealthInfo> {
-  return request<HealthInfo>('/health')
-}
+export const getStats = () => request<StatsData>("/api/stats");

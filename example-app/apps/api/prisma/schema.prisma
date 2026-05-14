@@ -7,85 +7,88 @@ generator client {
   provider = "prisma-client-js"
 }
 
+model Workspace {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  users    User[]
+  services Service[]
+  bookings Booking[]
+  payments Payment[]
+
+  @@map("workspaces")
+}
+
 model User {
   id           String   @id @default(cuid())
+  name         String
   email        String   @unique
   passwordHash String   @map("password_hash")
-  name         String
-  role         String   @default("user")
+  role         String   @default("client")
+  workspaceId  String   @map("workspace_id")
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
-  leads        Lead[]
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id])
 
   @@map("users")
 }
 
-model Lead {
+model Service {
   id          String   @id @default(cuid())
-  title       String
-  source      String   @default("manual")
-  budgetText  String?  @map("budget_text")
-  stackText   String?  @map("stack_text")
-  description String?
-  status      String   @default("new")
-  fitScore    Int      @default(0) @map("fit_score")
-  redFlags    String?  @map("red_flags")
-  notes       String?
+  workspaceId String   @map("workspace_id")
+  titleRu     String   @map("title_ru")
+  titleEn     String   @map("title_en")
+  descRu      String   @map("desc_ru")
+  descEn      String   @map("desc_en")
+  priceFromRub Int     @map("price_from_rub")
+  depositRub   Int     @map("deposit_rub")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
-  userId      String   @map("user_id")
-  user        User     @relation(fields: [userId], references: [id])
-  scores      LeadScore[]
 
-  @@map("leads")
+  workspace Workspace  @relation(fields: [workspaceId], references: [id])
+  bookings  Booking[]
+
+  @@map("services")
 }
 
-model LeadScore {
-  id        String   @id @default(cuid())
-  leadId    String   @map("lead_id")
-  lead      Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
-  score     Int
-  reasons   String[]
-  redFlags  String[] @map("red_flags")
-  createdAt DateTime @default(now()) @map("created_at")
+model Booking {
+  id             String   @id @default(cuid())
+  workspaceId    String   @map("workspace_id")
+  clientName     String   @map("client_name")
+  clientEmail    String   @map("client_email")
+  clientPhone    String   @map("client_phone")
+  serviceId      String   @map("service_id")
+  date           DateTime @db.Date
+  time           String
+  amountRub      Int      @map("amount_rub")
+  status         String   @default("new")
+  paymentId      String?  @map("payment_id")
+  idempotencyKey String?  @map("idempotency_key")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
 
-  @@map("lead_scores")
+  workspace Workspace @relation(fields: [workspaceId], references: [id])
+  service   Service   @relation(fields: [serviceId], references: [id])
+  payments  Payment[]
+
+  @@map("bookings")
 }
 
-model ChecklistTemplate {
-  id          String          @id @default(cuid())
-  name        String
-  category    String
-  description String
-  createdAt   DateTime        @default(now()) @map("created_at")
-  items       ChecklistItem[]
+model Payment {
+  id              String   @id @default(cuid())
+  bookingId       String   @map("booking_id")
+  workspaceId     String   @map("workspace_id")
+  amountRub       Int      @map("amount_rub")
+  currency        String   @default("RUB")
+  status          String   @default("pending")
+  idempotencyKey  String   @unique @map("idempotency_key")
+  gatewayResponse Json?    @map("gateway_response")
+  createdAt       DateTime @default(now()) @map("created_at")
 
-  @@map("checklist_templates")
-}
+  booking   Booking   @relation(fields: [bookingId], references: [id])
+  workspace Workspace @relation(fields: [workspaceId], references: [id])
 
-model ChecklistItem {
-  id          String           @id @default(cuid())
-  templateId  String           @map("template_id")
-  template    ChecklistTemplate @relation(fields: [templateId], references: [id])
-  title       String
-  description String?
-  severity    String           @default("medium")
-  status      String           @default("not_checked")
-  evidence    String?
-  createdAt   DateTime         @default(now()) @map("created_at")
-  updatedAt   DateTime         @updatedAt @map("updated_at")
-
-  @@map("checklist_items")
-}
-
-model DeploymentEvent {
-  id          String   @id @default(cuid())
-  environment String
-  version     String
-  commitSha   String   @map("commit_sha")
-  status      String   @default("pending")
-  message     String?
-  createdAt   DateTime @default(now()) @map("created_at")
-
-  @@map("deployment_events")
+  @@map("payments")
 }

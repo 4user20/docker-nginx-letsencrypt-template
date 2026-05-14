@@ -3,9 +3,11 @@ import fp from "fastify-plugin"
 import jwt from "jsonwebtoken"
 import { config } from "../config.js"
 
-interface JwtPayload {
+export interface JwtPayload {
   userId: string
   email: string
+  role: string
+  workspaceId: string
 }
 
 declare module "fastify" {

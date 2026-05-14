@@ -7,10 +7,9 @@ import errorHandler from "./middleware/errorHandler.js"
 import authMiddleware from "./middleware/auth.js"
 import healthRoutes from "./routes/health.js"
 import authRoutes from "./routes/auth.js"
-import leadRoutes from "./routes/leads.js"
-import checklistRoutes from "./routes/checklists.js"
-import deploymentRoutes from "./routes/deployment.js"
-import metricsPlugin from "./metrics.js"
+import serviceRoutes from "./routes/services.js"
+import bookingRoutes from "./routes/bookings.js"
+import statsRoutes from "./routes/stats.js"
 import { PrismaClient } from "@prisma/client"
 
 const globalForPrisma = globalThis as unknown as { prisma: PrismaClient | undefined }
@@ -32,10 +31,9 @@ export async function buildApp() {
   await app.register(authMiddleware)
   await app.register(healthRoutes)
   await app.register(authRoutes)
-  await app.register(leadRoutes)
-  await app.register(checklistRoutes)
-  await app.register(deploymentRoutes)
-  await app.register(metricsPlugin)
+  await app.register(serviceRoutes)
+  await app.register(bookingRoutes)
+  await app.register(statsRoutes)
 
   return app
 }

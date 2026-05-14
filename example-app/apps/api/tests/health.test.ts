@@ -1,29 +1,49 @@
-import { describe, it, expect, afterAll } from "vitest"
-import Fastify from "fastify"
-import healthRoutes from "../src/routes/health.js"
+// ---------------------------------------------------------------------------
+// Health endpoint tests
+// ---------------------------------------------------------------------------
+import { describe, beforeAll, afterAll, test, expect } from "vitest"
+import { buildApp } from "../src/server.js"
+import { ensureSchema, disconnectTestDb } from "./setup.js"
 
-describe("health routes", () => {
-  const app = Fastify()
+let app: Awaited<ReturnType<typeof buildApp>>
 
-  afterAll(async () => {
-    await app.close()
-  })
+beforeAll(async () => {
+  ensureSchema()
+  app = await buildApp()
+})
 
-  it("GET /health returns 200 with expected shape", async () => {
-    await app.register(healthRoutes)
-    await app.ready()
+afterAll(async () => {
+  await app.close()
+  await disconnectTestDb()
+})
 
-    const response = await app.inject({
+describe("GET /health", () => {
+  test("returns 200 with status ok", async () => {
+    const res = await app.inject({
       method: "GET",
       url: "/health",
     })
 
-    expect(response.statusCode).toBe(200)
-
-    const body = JSON.parse(response.body)
+    expect(res.statusCode).toBe(200)
+    const body = JSON.parse(res.body)
     expect(body).toHaveProperty("status", "ok")
     expect(body).toHaveProperty("timestamp")
     expect(body).toHaveProperty("uptime")
-    expect(body).toHaveProperty("memory")
+  })
+})
+
+describe("GET /ready", () => {
+  test("returns 200 with database status", async () => {
+    const res = await app.inject({
+      method: "GET",
+      url: "/ready",
+    })
+
+    expect(res.statusCode).toBe(200)
+    const body = JSON.parse(res.body)
+    expect(body).toHaveProperty("status")
+    expect(body).toHaveProperty("database")
+    expect(["ok", "degraded"]).toContain(body.status)
+    expect(["connected", "disconnected"]).toContain(body.database)
   })
 })
