@@ -1,9 +1,10 @@
 import { useState, FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { login } from '@/api/client'
+import { register } from '@/api/client'
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const navigate = useNavigate()
+  const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -12,14 +13,26 @@ export default function LoginPage() {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     setError('')
+
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters')
+      return
+    }
+
     setLoading(true)
     try {
-      const res = await login(email, password)
+      const res = await register({ name, email, password })
       localStorage.setItem('token', res.token)
       localStorage.setItem('userEmail', res.user.email)
       navigate('/')
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed')
+      const msg = err instanceof Error ? err.message : 'Registration failed'
+      try {
+        const parsed = JSON.parse(msg)
+        setError(parsed.message || msg)
+      } catch {
+        setError(msg)
+      }
     } finally {
       setLoading(false)
     }
@@ -35,6 +48,21 @@ export default function LoginPage() {
           onSubmit={handleSubmit}
           className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 space-y-4"
         >
+          <div>
+            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+              Name
+            </label>
+            <input
+              id="name"
+              type="text"
+              required
+              minLength={2}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="Your name"
+            />
+          </div>
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
               Email
@@ -57,10 +85,11 @@ export default function LoginPage() {
               id="password"
               type="password"
               required
+              minLength={8}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="••••••••"
+              placeholder="At least 8 characters"
             />
           </div>
           {error && (
@@ -71,12 +100,12 @@ export default function LoginPage() {
             disabled={loading}
             className="w-full bg-blue-600 text-white text-sm font-medium py-2 rounded-md hover:bg-blue-700 disabled:opacity-50 transition-colors"
           >
-            {loading ? 'Signing in...' : 'Sign in'}
+            {loading ? 'Creating account...' : 'Create account'}
           </button>
           <p className="text-center text-sm text-gray-500">
-            Don't have an account?{' '}
-            <Link to="/register" className="text-blue-600 hover:underline">
-              Create one
+            Already have an account?{' '}
+            <Link to="/login" className="text-blue-600 hover:underline">
+              Sign in
             </Link>
           </p>
         </form>

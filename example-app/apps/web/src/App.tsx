@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import Layout from '@/components/Layout'
 import LoginPage from '@/pages/LoginPage'
+import RegisterPage from '@/pages/RegisterPage'
 import Dashboard from '@/pages/Dashboard'
 import Leads from '@/pages/Leads'
 import Checklists from '@/pages/Checklists'
@@ -18,6 +19,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
       <Route
         element={
           <ProtectedRoute>

@@ -92,6 +92,19 @@ export interface PaginatedLeads {
   leads: Lead[]
 }
 
+export interface RegisterData {
+  name: string
+  email: string
+  password: string
+}
+
+export async function register(data: RegisterData): Promise<LoginResponse> {
+  return request<LoginResponse>('/api/auth/register', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  })
+}
+
 export async function login(email: string, password: string): Promise<LoginResponse> {
   return request<LoginResponse>('/api/auth/login', {
     method: 'POST',

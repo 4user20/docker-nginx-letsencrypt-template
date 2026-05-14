@@ -1,7 +1,8 @@
 import { FastifyInstance, FastifyError, FastifyReply, FastifyRequest } from "fastify"
+import fp from "fastify-plugin"
 import { ZodError } from "zod"
 
-export async function errorHandler(app: FastifyInstance) {
+async function errorHandler(app: FastifyInstance) {
   app.setErrorHandler((error: FastifyError | ZodError, request: FastifyRequest, reply: FastifyReply) => {
     app.log.error(error)
 
@@ -28,3 +29,5 @@ export async function errorHandler(app: FastifyInstance) {
     })
   })
 }
+
+export default fp(errorHandler)
