@@ -1,5 +1,6 @@
 import Fastify from "fastify"
 import cors from "@fastify/cors"
+import rateLimit from "@fastify/rate-limit"
 import { config } from "./config.js"
 import { logger } from "./logger.js"
 import { errorHandler } from "./middleware/errorHandler.js"
@@ -26,6 +27,7 @@ export async function buildApp() {
   })
 
   await app.register(cors, { origin: config.corsOrigin })
+  await app.register(rateLimit, { global: false })
   await app.register(errorHandler)
   await app.register(authMiddleware)
   await app.register(healthRoutes)
