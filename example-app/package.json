@@ -15,5 +15,11 @@
     "db:generate": "npm run db:generate --workspace=apps/api",
     "db:seed": "npm run db:seed --workspace=apps/api"
   },
-  "workspaces": ["apps/*", "packages/*"]
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "dependencies": {
+    "framer-motion": "^12.38.0"
+  }
 }

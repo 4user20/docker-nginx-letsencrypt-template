@@ -10,6 +10,7 @@ export interface DemoUser {
   id: string;
   name: string;
   email: string;
+  role: string;
   workspaceId: string;
 }
 
@@ -97,6 +98,12 @@ export const demoLogin = () =>
   request<AuthResponse>("/api/auth/demo-login", {
     method: "POST",
     body: JSON.stringify({}),
+  });
+
+export const loginWithPassword = (email: string, password: string) =>
+  request<AuthResponse>("/api/auth/login-with-password", {
+    method: "POST",
+    body: JSON.stringify({ email, password }),
   });
 
 export const register = (data: { name: string; email: string; password: string }) =>

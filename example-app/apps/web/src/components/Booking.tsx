@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { useLocale } from "@/providers/LocaleProvider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,6 +17,8 @@ import {
   User as UserIcon,
 } from "lucide-react";
 import { toast } from "sonner";
+import { motion, AnimatePresence } from "framer-motion";
+import { ReceiptModal } from "@/components/ReceiptModal";
 
 const TIMES = ["10:00", "11:30", "13:00", "14:30", "16:00", "17:30", "19:00"];
 
@@ -34,11 +36,29 @@ const nextDays = (count: number) => {
   return out;
 };
 
+// ── Slide direction for step transitions ──
+const stepVariants = {
+  enter: (direction: number) => ({
+    x: direction > 0 ? 60 : -60,
+    opacity: 0,
+  }),
+  center: {
+    x: 0,
+    opacity: 1,
+  },
+  exit: (direction: number) => ({
+    x: direction > 0 ? -60 : 60,
+    opacity: 0,
+  }),
+};
+
 export const Booking = ({ initialServiceId, onDone }: { initialServiceId?: string; onDone: () => void }) => {
   const { t, locale } = useLocale();
   const { user } = useAuth();
   const { addBooking, payBooking } = useBookings();
   const [step, setStep] = useState(0);
+  const [direction, setDirection] = useState(0);
+  const prevStepRef = useRef(step);
   const [serviceId, setServiceId] = useState(initialServiceId ?? services[1].id);
   const [date, setDate] = useState<string>("");
   const [time, setTime] = useState<string>("");
@@ -49,10 +69,17 @@ export const Booking = ({ initialServiceId, onDone }: { initialServiceId?: strin
   const [bookingId, setBookingId] = useState<string | null>(null);
   const [idempotencyKey, setIdempotencyKey] = useState<string | null>(null);
   const [paymentMeta, setPaymentMeta] = useState<{ paymentId: string; idempotencyKey: string } | null>(null);
+  const [receiptOpen, setReceiptOpen] = useState(false);
 
   useEffect(() => {
     if (initialServiceId) setServiceId(initialServiceId);
   }, [initialServiceId]);
+
+  // Track step direction for animation
+  useEffect(() => {
+    setDirection(step > prevStepRef.current ? 1 : -1);
+    prevStepRef.current = step;
+  }, [step]);
 
   const days = useMemo(() => nextDays(10), []);
   const service = services.find((s) => s.id === serviceId)!;
@@ -77,6 +104,7 @@ export const Booking = ({ initialServiceId, onDone }: { initialServiceId?: strin
     });
     setBookingId(result.booking.id);
     setIdempotencyKey(result.idempotencyKey);
+    toast.success(t("booking_success"), { description: t("booking_success_sub") });
     setStep(3);
   };
 
@@ -86,7 +114,14 @@ export const Booking = ({ initialServiceId, onDone }: { initialServiceId?: strin
     try {
       const meta = await payBooking(bookingId, idempotencyKey);
       setPaymentMeta({ paymentId: meta.paymentId, idempotencyKey: meta.idempotencyKey });
-      toast.success(t("booking_success"), { description: t("booking_success_sub") });
+      toast.success(t("booking_success"), {
+        description:
+          locale === "ru"
+            ? "Платёж обработан. Чек готов."
+            : "Payment processed. Receipt ready.",
+      });
+      // Open receipt modal after short delay
+      setTimeout(() => setReceiptOpen(true), 500);
     } catch {
       toast.error(locale === "ru" ? "Ошибка оплаты" : "Payment failed");
     } finally {
@@ -95,6 +130,26 @@ export const Booking = ({ initialServiceId, onDone }: { initialServiceId?: strin
   };
 
   const stepLabels = [t("booking_step1"), t("booking_step2"), t("booking_step3"), t("booking_step4")];
+
+  // Build booking object for receipt
+  const receiptBooking = useMemo(() => {
+    if (!paymentMeta || !bookingId) return null;
+    return {
+      id: bookingId,
+      workspaceId: "ws_studio_42",
+      clientName: name,
+      clientEmail: email,
+      clientPhone: phone,
+      serviceId,
+      date,
+      time,
+      amountRub: service.depositRub,
+      status: "paid" as const,
+      paymentId: paymentMeta.paymentId,
+      idempotencyKey: paymentMeta.idempotencyKey,
+      createdAt: Date.now(),
+    };
+  }, [paymentMeta, bookingId, name, email, phone, serviceId, date, time, service]);
 
   return (
     <section className="container py-8 md:py-16">
@@ -108,17 +163,19 @@ export const Booking = ({ initialServiceId, onDone }: { initialServiceId?: strin
           <div className="flex items-center gap-2 mb-6 overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0 pb-2">
             {stepLabels.map((label, i) => (
               <div key={i} className="flex items-center gap-2 flex-shrink-0">
-                <div
-                  className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold ${
+                <motion.div
+                  className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold relative ${
                     i < step
                       ? "bg-success text-white"
                       : i === step
                         ? "bg-primary text-primary-foreground"
                         : "bg-muted text-muted-foreground"
                   }`}
+                  animate={i === step ? { scale: [1, 1.15, 1] } : { scale: 1 }}
+                  transition={{ duration: 0.3 }}
                 >
                   {i < step ? <Check className="w-3.5 h-3.5" /> : i + 1}
-                </div>
+                </motion.div>
                 <span className={`text-xs sm:text-sm whitespace-nowrap ${i === step ? "font-semibold" : "text-muted-foreground"}`}>
                   {label}
                 </span>
@@ -129,166 +186,197 @@ export const Booking = ({ initialServiceId, onDone }: { initialServiceId?: strin
             ))}
           </div>
 
-          {step === 0 && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {services.map((s) => (
-                <button
-                  key={s.id}
-                  onClick={() => setServiceId(s.id)}
-                  className={`text-left p-4 rounded-lg border transition-all min-h-[80px] ${
-                    serviceId === s.id
-                      ? "border-primary bg-primary-soft"
-                      : "border-border hover:bg-muted"
-                  }`}
-                >
-                  <div className="font-medium text-sm sm:text-base">
-                    {locale === "ru" ? s.titleRu : s.titleEn}
-                  </div>
-                  <div className="text-xs text-muted-foreground mt-1">
-                    {t("booking_deposit")}: {formatRub(s.depositRub)}
-                  </div>
-                </button>
-              ))}
-            </div>
-          )}
+          {/* Progress bar */}
+          <div className="h-1 bg-muted rounded-full mb-6 overflow-hidden">
+            <motion.div
+              className="h-full bg-gradient-to-r from-primary to-accent rounded-full"
+              initial={{ width: "0%" }}
+              animate={{ width: `${((step + 1) / stepLabels.length) * 100}%` }}
+              transition={{ duration: 0.4, ease: "easeOut" }}
+            />
+          </div>
 
-          {step === 1 && (
-            <div className="space-y-6">
-              <div>
-                <Label className="mb-2 flex items-center gap-1.5">
-                  <Calendar className="w-4 h-4" /> {locale === "ru" ? "Дата" : "Date"}
-                </Label>
-                {/* Horizontal scroll for date picker on mobile */}
-                <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 snap-x snap-mandatory">
-                  {days.map((d) => (
-                    <button
-                      key={d.date}
-                      onClick={() => setDate(d.date)}
-                      className={`flex-shrink-0 snap-start px-3 py-2.5 rounded-lg border text-center min-w-[72px] transition-colors min-h-[44px] ${
-                        date === d.date
-                          ? "border-primary bg-primary text-primary-foreground"
-                          : "border-border hover:bg-muted"
-                      }`}
-                    >
-                      <div className="text-[10px] uppercase opacity-70">{d.weekday}</div>
-                      <div className="text-sm font-semibold">{d.label}</div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <Label className="mb-2 flex items-center gap-1.5">
-                  <Clock className="w-4 h-4" /> {locale === "ru" ? "Время" : "Time"}
-                </Label>
-                {/* Time slots: wrap on mobile */}
-                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-7 gap-2">
-                  {TIMES.map((tm) => (
-                    <button
-                      key={tm}
-                      onClick={() => setTime(tm)}
-                      className={`py-2.5 text-sm rounded-md border transition-colors min-h-[44px] ${
-                        time === tm
-                          ? "border-primary bg-primary text-primary-foreground"
-                          : "border-border hover:bg-muted"
-                      }`}
-                    >
-                      {tm}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {step === 2 && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-xl">
-              <div className="sm:col-span-2">
-                <Label htmlFor="bn">{t("booking_name")}</Label>
-                <Input
-                  id="bn"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Анна"
-                  className="text-base h-11" // 16px min font size to prevent iOS zoom
-                />
-              </div>
-              <div>
-                <Label htmlFor="bp">{t("booking_phone")}</Label>
-                <Input
-                  id="bp"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="+7 999 000 00 00"
-                  className="text-base h-11"
-                />
-              </div>
-              <div>
-                <Label htmlFor="be">{t("booking_email")}</Label>
-                <Input
-                  id="be"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@mail.ru"
-                  className="text-base h-11"
-                />
-              </div>
-            </div>
-          )}
-
-          {step === 3 && (
-            <div className="space-y-6 max-w-xl">
-              {!paymentMeta ? (
-                <>
-                  <div className="rounded-lg border border-border p-4 space-y-2 text-sm">
-                    <Row k={locale === "ru" ? "Услуга" : "Service"} v={locale === "ru" ? service.titleRu : service.titleEn} />
-                    <Row k={locale === "ru" ? "Когда" : "When"} v={`${date} • ${time}`} />
-                    <Row k={locale === "ru" ? "Клиент" : "Client"} v={`${name} • ${phone}`} />
-                    <Row k={t("booking_deposit")} v={formatRub(service.depositRub)} bold />
+          {/* Animated step content */}
+          <div className="overflow-hidden">
+            <AnimatePresence mode="wait" custom={direction}>
+              <motion.div
+                key={step}
+                custom={direction}
+                variants={stepVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{ duration: 0.25, ease: "easeInOut" }}
+              >
+                {step === 0 && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {services.map((s) => (
+                      <button
+                        key={s.id}
+                        onClick={() => setServiceId(s.id)}
+                        className={`text-left p-4 rounded-lg border transition-all min-h-[80px] ${
+                          serviceId === s.id
+                            ? "border-primary bg-primary-soft"
+                            : "border-border hover:bg-muted"
+                        }`}
+                      >
+                        <div className="font-medium text-sm sm:text-base">
+                          {locale === "ru" ? s.titleRu : s.titleEn}
+                        </div>
+                        <div className="text-xs text-muted-foreground mt-1">
+                          {t("booking_deposit")}: {formatRub(s.depositRub)}
+                        </div>
+                      </button>
+                    ))}
                   </div>
-                  <Button
-                    size="lg"
-                    onClick={handlePay}
-                    disabled={paying}
-                    className="w-full gap-2 h-12 text-base"
-                  >
-                    {paying ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
+                )}
+
+                {step === 1 && (
+                  <div className="space-y-6">
+                    <div>
+                      <Label className="mb-2 flex items-center gap-1.5">
+                        <Calendar className="w-4 h-4" /> {locale === "ru" ? "Дата" : "Date"}
+                      </Label>
+                      <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 snap-x snap-mandatory">
+                        {days.map((d) => (
+                          <button
+                            key={d.date}
+                            onClick={() => setDate(d.date)}
+                            className={`flex-shrink-0 snap-start px-3 py-2.5 rounded-lg border text-center min-w-[72px] transition-colors min-h-[44px] ${
+                              date === d.date
+                                ? "border-primary bg-primary text-primary-foreground"
+                                : "border-border hover:bg-muted"
+                            }`}
+                          >
+                            <div className="text-[10px] uppercase opacity-70">{d.weekday}</div>
+                            <div className="text-sm font-semibold">{d.label}</div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <Label className="mb-2 flex items-center gap-1.5">
+                        <Clock className="w-4 h-4" /> {locale === "ru" ? "Время" : "Time"}
+                      </Label>
+                      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-7 gap-2">
+                        {TIMES.map((tm) => (
+                          <button
+                            key={tm}
+                            onClick={() => setTime(tm)}
+                            className={`py-2.5 text-sm rounded-md border transition-colors min-h-[44px] ${
+                              time === tm
+                                ? "border-primary bg-primary text-primary-foreground"
+                                : "border-border hover:bg-muted"
+                            }`}
+                          >
+                            {tm}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {step === 2 && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-xl">
+                    <div className="sm:col-span-2">
+                      <Label htmlFor="bn">{t("booking_name")}</Label>
+                      <Input
+                        id="bn"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        placeholder="Анна"
+                        className="text-base h-11"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="bp">{t("booking_phone")}</Label>
+                      <Input
+                        id="bp"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        placeholder="+7 999 000 00 00"
+                        className="text-base h-11"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="be">{t("booking_email")}</Label>
+                      <Input
+                        id="be"
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="you@mail.ru"
+                        className="text-base h-11"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {step === 3 && (
+                  <div className="space-y-6 max-w-xl">
+                    {!paymentMeta ? (
+                      <>
+                        <div className="rounded-lg border border-border p-4 space-y-2 text-sm">
+                          <Row k={locale === "ru" ? "Услуга" : "Service"} v={locale === "ru" ? service.titleRu : service.titleEn} />
+                          <Row k={locale === "ru" ? "Когда" : "When"} v={`${date} • ${time}`} />
+                          <Row k={locale === "ru" ? "Клиент" : "Client"} v={`${name} • ${phone}`} />
+                          <Row k={t("booking_deposit")} v={formatRub(service.depositRub)} bold />
+                        </div>
+                        <Button
+                          size="lg"
+                          onClick={handlePay}
+                          disabled={paying}
+                          className="w-full gap-2 h-12 text-base"
+                        >
+                          {paying ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <CreditCard className="w-4 h-4" />
+                          )}
+                          {t("booking_pay")} {formatRub(service.depositRub)}
+                        </Button>
+                        <div className="text-xs text-muted-foreground flex items-center gap-1.5">
+                          <ShieldCheck className="w-3.5 h-3.5" />
+                          {locale === "ru"
+                            ? "Mock-checkout. Реальная оплата не списывается."
+                            : "Mock checkout. No real charge."}
+                        </div>
+                      </>
                     ) : (
-                      <CreditCard className="w-4 h-4" />
+                      <motion.div
+                        className="text-center py-8 space-y-4"
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        <div className="w-16 h-16 mx-auto rounded-full bg-success-soft flex items-center justify-center">
+                          <Check className="w-8 h-8 text-success" />
+                        </div>
+                        <div>
+                          <h3 className="text-xl font-semibold">{t("booking_success")}</h3>
+                          <p className="text-muted-foreground mt-1">{t("booking_success_sub")}</p>
+                        </div>
+                        <div className="text-xs text-muted-foreground font-mono bg-muted rounded-md p-3 inline-block">
+                          paymentId: {paymentMeta.paymentId}
+                          <br />
+                          idempotencyKey: {paymentMeta.idempotencyKey}
+                        </div>
+                        <div className="flex flex-wrap gap-2 justify-center">
+                          <Button variant="outline" onClick={() => setReceiptOpen(true)}>
+                            {locale === "ru" ? "Чек" : "Receipt"}
+                          </Button>
+                          <Button variant="outline" onClick={onDone}>
+                            {locale === "ru" ? "В кабинет" : "To profile"}
+                          </Button>
+                        </div>
+                      </motion.div>
                     )}
-                    {t("booking_pay")} {formatRub(service.depositRub)}
-                  </Button>
-                  <div className="text-xs text-muted-foreground flex items-center gap-1.5">
-                    <ShieldCheck className="w-3.5 h-3.5" />
-                    {locale === "ru"
-                      ? "Mock-checkout. Реальная оплата не списывается."
-                      : "Mock checkout. No real charge."}
                   </div>
-                </>
-              ) : (
-                <div className="text-center py-8 space-y-4 animate-in fade-in zoom-in duration-300">
-                  <div className="w-16 h-16 mx-auto rounded-full bg-success-soft flex items-center justify-center">
-                    <Check className="w-8 h-8 text-success" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-semibold">{t("booking_success")}</h3>
-                    <p className="text-muted-foreground mt-1">{t("booking_success_sub")}</p>
-                  </div>
-                  <div className="text-xs text-muted-foreground font-mono bg-muted rounded-md p-3 inline-block">
-                    paymentId: {paymentMeta.paymentId}
-                    <br />
-                    idempotencyKey: {paymentMeta.idempotencyKey}
-                  </div>
-                  <div className="flex gap-2 justify-center">
-                    <Button variant="outline" onClick={onDone}>
-                      {locale === "ru" ? "В кабинет" : "To profile"}
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
+                )}
+              </motion.div>
+            </AnimatePresence>
+          </div>
 
           {step < 3 && (
             <div className="flex justify-between mt-8 gap-3">
@@ -350,6 +438,16 @@ export const Booking = ({ initialServiceId, onDone }: { initialServiceId?: strin
           </div>
         </aside>
       </div>
+
+      {/* Receipt Modal */}
+      {receiptBooking && (
+        <ReceiptModal
+          booking={receiptBooking}
+          paymentId={paymentMeta?.paymentId ?? ""}
+          open={receiptOpen}
+          onClose={() => setReceiptOpen(false)}
+        />
+      )}
     </section>
   );
 };

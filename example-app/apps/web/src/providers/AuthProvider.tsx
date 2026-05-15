@@ -6,9 +6,12 @@ export type { DemoUser } from "@/api/client";
 interface AuthCtx {
   user: api.DemoUser | null;
   isAuthenticated: boolean;
+  isAdmin: boolean;
   isLoading: boolean;
   error: string | null;
-  login: (email: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
+  loginWithPassword: (email: string, password: string) => Promise<void>;
+  register: (data: { name: string; email: string; password: string }) => Promise<void>;
   logout: () => void;
   demoLogin: () => Promise<void>;
   expireSession: () => void;
@@ -55,15 +58,43 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
-  const login = useCallback(async (email: string) => {
+  const login = useCallback(async (email: string, password: string) => {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.login(email);
+      const res = await api.loginWithPassword(email, password);
       localStorage.setItem("token", res.token);
       setUser(res.user);
     } catch (e: any) {
       setError(e.message ?? "login failed");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const loginWithPasswordFn = useCallback(async (email: string, password: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await api.loginWithPassword(email, password);
+      localStorage.setItem("token", res.token);
+      setUser(res.user);
+    } catch (e: any) {
+      setError(e.message ?? "login failed");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const register = useCallback(async (data: { name: string; email: string; password: string }) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await api.register(data);
+      localStorage.setItem("token", res.token);
+      setUser(res.user);
+    } catch (e: any) {
+      setError(e.message ?? "registration failed");
     } finally {
       setLoading(false);
     }
@@ -84,14 +115,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const dismissExpired = useCallback(() => setExpired(false), []);
 
+  const isAdmin = !!user && user.role === "admin";
+
   return (
     <Ctx.Provider
       value={{
         user,
         isAuthenticated: !!user,
+        isAdmin,
         isLoading,
         error,
         login,
+        loginWithPassword: loginWithPasswordFn,
+        register,
         logout,
         demoLogin,
         expireSession,

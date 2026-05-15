@@ -95,6 +95,30 @@ export const dict: Dict = {
   expired_ok: { ru: "Понятно", en: "Got it" },
   // dev drawer
   dev_title: { ru: "Технические детали платежа", en: "Payment technical details" },
+  // auth modals
+  auth_login_title: { ru: "Войти", en: "Sign In" },
+  auth_login_email: { ru: "Email", en: "Email" },
+  auth_login_password: { ru: "Пароль", en: "Password" },
+  auth_login_submit: { ru: "Войти", en: "Sign In" },
+  auth_login_loading: { ru: "Вход...", en: "Signing in..." },
+  auth_login_error: { ru: "Неверный email или пароль", en: "Invalid email or password" },
+  auth_no_account: { ru: "Нет аккаунта?", en: "No account?" },
+  auth_register_link: { ru: "Зарегистрироваться", en: "Register" },
+  auth_demo_link: { ru: "Войти через демо", en: "Sign in with demo" },
+  auth_login_success: { ru: "Успешный вход", en: "Signed in successfully" },
+  auth_register_title: { ru: "Регистрация", en: "Create Account" },
+  auth_register_desc: { ru: "Заполните форму для создания аккаунта", en: "Fill in the form to create your account" },
+  auth_name: { ru: "Имя", en: "Name" },
+  auth_create: { ru: "Создать аккаунт", en: "Create Account" },
+  auth_login_link: { ru: "Войти", en: "Sign in" },
+  auth_error_invalid: { ru: "Неверный email или пароль", en: "Invalid email or password" },
+  auth_error_exists: { ru: "Email уже зарегистрирован", en: "Email already registered" },
+  auth_error_generic: { ru: "Произошла ошибка", en: "An error occurred" },
+  // confirm dialog
+  confirm_logout_title: { ru: "Выйти?", en: "Sign out?" },
+  confirm_logout_desc: { ru: "Вы уверены, что хотите выйти?", en: "Are you sure you want to sign out?" },
+  confirm_cancel: { ru: "Отмена", en: "Cancel" },
+  confirm_confirm: { ru: "Выйти", en: "Sign out" },
 };
 
 export const t = (key: keyof typeof dict, locale: Locale): string => {

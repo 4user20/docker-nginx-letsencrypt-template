@@ -118,6 +118,35 @@ async function authRoutes(app: FastifyInstance) {
     }
   })
 
+  // ── POST /api/auth/login-with-password ─────────────────────────
+  app.post("/api/auth/login-with-password", {
+    config: { rateLimit: { max: 10, timeWindow: "1 minute" } },
+  }, async (request, reply) => {
+    const body = z.object({
+      email: z.string().email(),
+      password: z.string().min(1),
+    }).parse(request.body)
+
+    const user = await prisma.user.findUnique({ where: { email: body.email } })
+    if (!user) {
+      reply.status(401).send({ error: "Unauthorized", message: "Invalid email or password" })
+      return
+    }
+
+    const valid = await bcrypt.compare(body.password, user.passwordHash)
+    if (!valid) {
+      reply.status(401).send({ error: "Unauthorized", message: "Invalid email or password" })
+      return
+    }
+
+    const token = generateToken(user)
+
+    return {
+      token,
+      user: sanitizeUser(user),
+    }
+  })
+
   // ── POST /api/auth/demo-login ──────────────────────────────────
   app.post("/api/auth/demo-login", {
     config: { rateLimit: { max: 5, timeWindow: "1 minute" } },

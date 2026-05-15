@@ -3,9 +3,14 @@ import { useLocale } from "@/providers/LocaleProvider";
 import { useAuth } from "@/providers/AuthProvider";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Languages, LogIn, LogOut, Menu, Sparkles, X } from "lucide-react";
+import { Languages, LogOut, Menu, Moon, Sparkles, Sun, X } from "lucide-react";
 import { Locale } from "@/lib/i18n";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { toast } from "sonner";
+import { LoginModal } from "./LoginModal";
+import { RegisterModal } from "./RegisterModal";
+import { useTheme } from "next-themes";
+import { useEffect, useState as ReactUseState } from "react";
 
 interface Props {
   active: string;
@@ -25,12 +30,35 @@ export const TopNav = ({ active, onNavigate }: Props) => {
   const { isAuthenticated, user, logout, demoLogin, isLoading } = useAuth();
   const isMobile = useIsMobile();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [loginOpen, setLoginOpen] = useState(false);
+  const [registerOpen, setRegisterOpen] = useState(false);
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = ReactUseState(false);
+
+  useEffect(() => setMounted(true), []);
 
   const toggle = () => setLocale(locale === "ru" ? "en" : ("ru" as Locale));
 
   const handleNav = (id: string) => {
     onNavigate(id);
     setMobileOpen(false);
+  };
+
+  const handleDemoLogin = async () => {
+    try {
+      await demoLogin();
+      toast.success(
+        locale === "ru" ? "Добро пожаловать!" : "Welcome!",
+        { description: locale === "ru" ? "Вы вошли в демо-режиме." : "You signed in as a demo user." },
+      );
+    } catch {
+      toast.error(locale === "ru" ? "Ошибка входа" : "Login failed");
+    }
+  };
+
+  const handleLogout = () => {
+    logout();
+    toast.info(locale === "ru" ? "Вы вышли из системы" : "Signed out");
   };
 
   return (
@@ -45,7 +73,8 @@ export const TopNav = ({ active, onNavigate }: Props) => {
             <Sparkles className="w-4 h-4" />
           </span>
           <span className="text-sm sm:text-base">
-            SlotPay <span className="text-muted-foreground font-normal">Studio</span>
+            SlotPay{" "}
+            <span className="text-muted-foreground font-normal font-heading">Studio</span>
           </span>
         </button>
 
@@ -70,6 +99,23 @@ export const TopNav = ({ active, onNavigate }: Props) => {
 
         {/* Right side actions */}
         <div className="ml-auto flex items-center gap-1 sm:gap-2">
+          {/* Theme Toggle */}
+          {mounted && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              className="min-h-[44px] min-w-[44px] rounded-full"
+              aria-label={locale === "ru" ? "Переключить тему" : "Toggle theme"}
+            >
+              {theme === "dark" ? (
+                <Sun className="w-4 h-4 text-amber-400" />
+              ) : (
+                <Moon className="w-4 h-4 text-slate-600" />
+              )}
+            </Button>
+          )}
+
           <Button variant="ghost" size="sm" onClick={toggle} className="gap-1.5 min-h-[44px]">
             <Languages className="w-4 h-4" />
             <span className="text-xs font-semibold uppercase">{locale}</span>
@@ -79,7 +125,7 @@ export const TopNav = ({ active, onNavigate }: Props) => {
             <Button
               variant="outline"
               size="sm"
-              onClick={logout}
+              onClick={handleLogout}
               className="gap-1.5 min-h-[44px]"
             >
               <LogOut className="w-4 h-4" />
@@ -88,11 +134,11 @@ export const TopNav = ({ active, onNavigate }: Props) => {
           ) : (
             <Button
               size="sm"
-              onClick={demoLogin}
+              onClick={() => setLoginOpen(true)}
               disabled={isLoading}
               className="gap-1.5 min-h-[44px]"
             >
-              <LogIn className="w-4 h-4" />
+              <Sparkles className="w-4 h-4" />
               {t("profile_login")}
             </Button>
           )}
@@ -109,7 +155,7 @@ export const TopNav = ({ active, onNavigate }: Props) => {
               <SheetContent side="right" className="w-[280px] p-0">
                 <div className="flex flex-col h-full">
                   <div className="flex items-center justify-between p-4 border-b border-border">
-                    <span className="font-semibold text-sm">SlotPay Studio</span>
+                    <span className="font-semibold text-sm font-heading">SlotPay Studio</span>
                     <Button
                       variant="ghost"
                       size="icon"
@@ -134,24 +180,45 @@ export const TopNav = ({ active, onNavigate }: Props) => {
                       </button>
                     ))}
                   </nav>
-                  <div className="p-4 border-t border-border">
+                  <div className="p-4 border-t border-border space-y-2">
+                    {mounted && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                        className="w-full gap-2"
+                      >
+                        {theme === "dark" ? (
+                          <><Sun className="w-4 h-4" /> Light mode</>
+                        ) : (
+                          <><Moon className="w-4 h-4" /> Dark mode</>
+                        )}
+                      </Button>
+                    )}
                     {isAuthenticated ? (
-                      <div className="text-xs text-muted-foreground">
+                      <div className="text-xs text-muted-foreground px-2">
                         {user?.name} · {user?.email}
                       </div>
                     ) : (
-                      <Button
-                        size="sm"
-                        onClick={() => {
-                          demoLogin();
-                          setMobileOpen(false);
-                        }}
-                        disabled={isLoading}
-                        className="w-full gap-1.5"
-                      >
-                        <LogIn className="w-4 h-4" />
-                        {t("profile_login")}
-                      </Button>
+                      <>
+                        <Button
+                          size="sm"
+                          onClick={() => { setLoginOpen(true); setMobileOpen(false); }}
+                          disabled={isLoading}
+                          className="w-full gap-1.5"
+                        >
+                          <Sparkles className="w-4 h-4" />
+                          {t("profile_login")}
+                        </Button>
+                        <p className="text-xs text-center text-muted-foreground">
+                          <button
+                            onClick={() => { handleDemoLogin(); setMobileOpen(false); }}
+                            className="hover:text-foreground underline underline-offset-2"
+                          >
+                            {locale === "ru" ? "Демо-доступ" : "Demo access"}
+                          </button>
+                        </p>
+                      </>
                     )}
                   </div>
                 </div>
@@ -160,6 +227,18 @@ export const TopNav = ({ active, onNavigate }: Props) => {
           )}
         </div>
       </div>
+
+      {/* Auth Modals */}
+      <LoginModal
+        open={loginOpen}
+        onOpenChange={setLoginOpen}
+        onSwitchToRegister={() => { setLoginOpen(false); setRegisterOpen(true); }}
+      />
+      <RegisterModal
+        open={registerOpen}
+        onOpenChange={setRegisterOpen}
+        onSwitchToLogin={() => { setRegisterOpen(false); setLoginOpen(true); }}
+      />
     </header>
   );
 };
