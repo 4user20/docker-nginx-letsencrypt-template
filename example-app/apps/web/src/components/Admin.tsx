@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useLocale } from "@/providers/LocaleProvider";
-import { useBookings, services, formatRub, type BookingStatus, type Service } from "@/providers/BookingsProvider";
+import { useBookings, services, formatRub, type BookingStatus, type Service, type Booking } from "@/providers/BookingsProvider";
 import { useAuth } from "@/providers/AuthProvider";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,7 @@ import {
 import { useIsMobile } from "@/hooks/use-mobile";
 import { AdminAuthGuard } from "@/components/AdminAuthGuard";
 import { SkeletonStats, LoadingSkeleton } from "@/components/LoadingSkeleton";
+import { BookingDetailModal } from "@/components/BookingDetailModal";
 import {
   Search,
   TrendingUp,
@@ -32,6 +33,7 @@ import {
   ChevronRight,
   Check,
   Loader2,
+  FilterX,
 } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -82,11 +84,14 @@ const notifyStatus = (status: BookingStatus, locale: "ru" | "en") => {
 // ── Main Admin component ──────────────────────────
 export const Admin = () => {
   const { t, locale } = useLocale();
-  const { bookings, setStatus, isLoading: bookingsLoading } = useBookings();
+  const { bookings, setStatus, payBooking, isLoading: bookingsLoading } = useBookings();
   const { user } = useAuth();
   const isMobile = useIsMobile();
   const [filter, setFilter] = useState<Filter>("all");
   const [query, setQuery] = useState("");
+  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [paying, setPaying] = useState(false);
 
   const today = new Date().toISOString().slice(0, 10);
 
@@ -118,7 +123,7 @@ export const Admin = () => {
       if (filter !== "all" && b.status !== filter) return false;
       if (query) {
         const svc = services.find((s) => s.id === b.serviceId);
-        const hay = `${b.clientName} ${svc?.titleRu ?? ""} ${svc?.titleEn ?? ""} ${b.clientEmail}`.toLowerCase();
+        const hay = `${b.clientName} ${svc?.titleRu ?? ""} ${svc?.titleEn ?? ""} ${b.clientEmail} ${b.clientPhone ?? ""}`.toLowerCase();
         if (!hay.includes(query.toLowerCase())) return false;
       }
       return true;
@@ -146,6 +151,35 @@ export const Admin = () => {
     setStatus(id, status);
     notifyStatus(status, locale);
   };
+
+  const handleBookingClick = (b: Booking) => {
+    setSelectedBooking(b);
+    setDetailOpen(true);
+  };
+
+  const handleDetailPay = async (id: string, idempotencyKey: string) => {
+    setPaying(true);
+    try {
+      await payBooking(id, idempotencyKey);
+      toast.success(locale === "ru" ? "Бронь оплачена" : "Booking paid");
+      setDetailOpen(false);
+      setSelectedBooking(null);
+    } catch {
+      toast.error(locale === "ru" ? "Ошибка оплаты" : "Payment failed");
+    } finally {
+      setPaying(false);
+    }
+  };
+
+  // Filter counts for badges
+  const filterCounts = useMemo(() => ({
+    all: bookings.length,
+    new: bookings.filter((b) => b.status === "new").length,
+    paid: bookings.filter((b) => b.status === "paid").length,
+    cancelled: bookings.filter((b) => b.status === "cancelled").length,
+  }), [bookings]);
+
+  const hasActiveFilter = filter !== "all" || query.trim().length > 0;
 
   const kpis = [
     { label: t("admin_kpi_today"), value: stats.todayCount, icon: Activity, color: "text-primary bg-primary-soft" },
@@ -239,8 +273,17 @@ export const Admin = () => {
                   onChange={(e) => setQuery(e.target.value)}
                   className="pl-9 pr-16 h-11 text-base"
                 />
-                {!isMobile && (
-                  <span className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 text-muted-foreground">
+                {query && (
+                  <button
+                    onClick={() => setQuery("")}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-1"
+                    title={locale === "ru" ? "Очистить поиск" : "Clear search"}
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+                {!query && !isMobile && (
+                  <span className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 text-muted-foreground pointer-events-none">
                     <span className="kbd">
                       <Command className="w-2.5 h-2.5" />
                     </span>
@@ -253,15 +296,34 @@ export const Admin = () => {
                   <button
                     key={f.id}
                     onClick={() => setFilter(f.id)}
-                    className={`px-2.5 md:px-3 py-1.5 text-xs font-medium rounded transition-colors whitespace-nowrap min-h-[36px] ${
+                    className={`px-2.5 md:px-3 py-1.5 text-xs font-medium rounded transition-colors whitespace-nowrap min-h-[36px] flex items-center gap-1.5 ${
                       filter === f.id
                         ? "bg-card shadow-sm text-foreground"
                         : "text-muted-foreground hover:text-foreground"
                     }`}
                   >
                     {t(f.key)}
+                    {filterCounts[f.id as keyof typeof filterCounts] > 0 && (
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${
+                        filter === f.id
+                          ? "bg-primary-soft text-primary"
+                          : "bg-muted-foreground/10 text-muted-foreground"
+                      }`}>
+                        {filterCounts[f.id as keyof typeof filterCounts]}
+                      </span>
+                    )}
                   </button>
                 ))}
+                {/* Clear filter button */}
+                {hasActiveFilter && (
+                  <button
+                    onClick={() => { setFilter("all"); setQuery(""); }}
+                    className="px-2 py-1.5 text-xs font-medium rounded transition-colors text-muted-foreground hover:text-foreground hover:bg-muted flex items-center gap-1 ml-1"
+                    title={locale === "ru" ? "Сбросить фильтры" : "Clear filters"}
+                  >
+                    <FilterX className="w-3 h-3" />
+                  </button>
+                )}
               </div>
             </div>
 
@@ -278,7 +340,8 @@ export const Admin = () => {
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.95 }}
-                        className="soft-card p-4 space-y-3"
+                        className="soft-card p-4 space-y-3 cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.99]"
+                        onClick={() => handleBookingClick(b)}
                       >
                         <div className="flex items-start justify-between gap-2">
                           <div>
@@ -328,7 +391,25 @@ export const Admin = () => {
                   })}
                 </AnimatePresence>
                 {filtered.length === 0 && (
-                  <div className="py-8 text-center text-muted-foreground text-sm">—</div>
+                  <div className="py-10 text-center text-muted-foreground">
+                    <div className="w-12 h-12 mx-auto rounded-full bg-muted flex items-center justify-center mb-3">
+                      <Search className="w-5 h-5" />
+                    </div>
+                    <p className="text-sm font-medium">
+                      {query || filter !== "all"
+                        ? (locale === "ru" ? "Ничего не найдено" : "No results found")
+                        : (locale === "ru" ? "Нет заявок" : "No bookings yet")}
+                    </p>
+                    {(query || filter !== "all") && (
+                      <button
+                        onClick={() => { setFilter("all"); setQuery(""); }}
+                        className="text-xs text-primary hover:underline mt-1 inline-flex items-center gap-1"
+                      >
+                        <FilterX className="w-3 h-3" />
+                        {locale === "ru" ? "Сбросить фильтры" : "Clear filters"}
+                      </button>
+                    )}
+                  </div>
                 )}
               </div>
             ) : (
@@ -356,7 +437,8 @@ export const Admin = () => {
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
-                            className="border-b border-border/60 hover:bg-muted/40 transition-colors"
+                            className="border-b border-border/60 hover:bg-muted/40 transition-colors cursor-pointer"
+                            onClick={() => handleBookingClick(b)}
                           >
                             <td className="py-3 px-5">
                               <div className="font-medium">{b.clientName}</div>
@@ -506,7 +588,8 @@ export const Admin = () => {
                           initial={{ opacity: 0, x: -10 }}
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ delay: i * 0.05 }}
-                          className="flex items-center gap-2 py-1.5 border-b border-border/40 last:border-0"
+                          className="flex items-center gap-2 py-1.5 border-b border-border/40 last:border-0 cursor-pointer hover:bg-muted/30 rounded-md px-1 -mx-1 transition-colors"
+                          onClick={() => handleBookingClick(b)}
                         >
                           <div className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />
                           <div className="flex-1 min-w-0">
@@ -555,6 +638,18 @@ export const Admin = () => {
           </div>
         </motion.div>
       </section>
+
+      {/* Booking Detail Modal */}
+      {selectedBooking && (
+        <BookingDetailModal
+          booking={selectedBooking}
+          open={detailOpen}
+          onClose={() => { setDetailOpen(false); setSelectedBooking(null); }}
+          onStatusChange={handleStatusChange}
+          onPay={handleDetailPay}
+          paying={paying}
+        />
+      )}
     </AdminAuthGuard>
   );
 };

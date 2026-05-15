@@ -1,5 +1,13 @@
 import "@testing-library/jest-dom";
 
+// Polyfill ResizeObserver for Radix UI components
+class ResizeObserverMock {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+window.ResizeObserver = ResizeObserverMock as any;
+
 Object.defineProperty(window, "matchMedia", {
   writable: true,
   value: (query: string) => ({

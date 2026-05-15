@@ -15,6 +15,9 @@ import {
   Calendar,
   Clock,
   User as UserIcon,
+  LogIn,
+  X,
+  AlertCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -67,6 +70,8 @@ export const Booking = ({ initialServiceId, onDone }: { initialServiceId?: strin
   const [phone, setPhone] = useState("");
   const [paying, setPaying] = useState(false);
   const [bookingId, setBookingId] = useState<string | null>(null);
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const [showAuthPrompt, setShowAuthPrompt] = useState(false);
   const [idempotencyKey, setIdempotencyKey] = useState<string | null>(null);
   const [paymentMeta, setPaymentMeta] = useState<{ paymentId: string; idempotencyKey: string } | null>(null);
   const [receiptOpen, setReceiptOpen] = useState(false);
@@ -83,6 +88,32 @@ export const Booking = ({ initialServiceId, onDone }: { initialServiceId?: strin
 
   const days = useMemo(() => nextDays(10), []);
   const service = services.find((s) => s.id === serviceId)!;
+
+  // ── Real-time validation ──
+  const fieldErrors = useMemo(() => {
+    const errs: Record<string, string | null> = {};
+    if (touched["name"]) {
+      errs["name"] = name.trim().length < 2
+        ? (locale === "ru" ? "Минимум 2 символа" : "At least 2 characters")
+        : null;
+    }
+    if (touched["email"]) {
+      errs["email"] = !/\S+@\S+\.\S+/.test(email)
+        ? (locale === "ru" ? "Некорректный email" : "Invalid email")
+        : null;
+    }
+    if (touched["phone"]) {
+      const digits = phone.replace(/\D/g, "");
+      errs["phone"] = digits.length < 6
+        ? (locale === "ru" ? "Минимум 6 цифр" : "At least 6 digits")
+        : null;
+    }
+    return errs;
+  }, [name, email, phone, touched, locale]);
+
+  const handleBlur = (field: string) => {
+    setTouched((prev) => ({ ...prev, [field]: true }));
+  };
 
   const canNext = [
     !!serviceId,
@@ -196,6 +227,42 @@ export const Booking = ({ initialServiceId, onDone }: { initialServiceId?: strin
             />
           </div>
 
+          {/* Auth prompt banner (shown when not authenticated) */}
+          {!user && !showAuthPrompt && (
+            <motion.div
+              className="mb-4 p-3 rounded-lg bg-primary-soft/60 border border-primary/20 flex items-center gap-2 text-xs"
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <AlertCircle className="w-3.5 h-3.5 text-primary flex-shrink-0" />
+              <span className="flex-1 text-muted-foreground">
+                {locale === "ru"
+                  ? "Войдите, чтобы сохранить историю броней"
+                  : "Sign in to save your booking history"}
+              </span>
+              <div className="flex gap-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 px-2 text-xs gap-1"
+                  onClick={() => setShowAuthPrompt(true)}
+                >
+                  <LogIn className="w-3 h-3" />
+                  {locale === "ru" ? "Войти" : "Sign in"}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 px-2 text-xs"
+                  onClick={() => setShowAuthPrompt(true)}
+                >
+                  <X className="w-3 h-3" />
+                </Button>
+              </div>
+            </motion.div>
+          )}
+
           {/* Animated step content */}
           <div className="overflow-hidden">
             <AnimatePresence mode="wait" custom={direction}>
@@ -214,7 +281,7 @@ export const Booking = ({ initialServiceId, onDone }: { initialServiceId?: strin
                       <button
                         key={s.id}
                         onClick={() => setServiceId(s.id)}
-                        className={`text-left p-4 rounded-lg border transition-all min-h-[80px] ${
+                        className={`text-left p-4 rounded-lg border transition-all min-h-[80px] cursor-pointer hover:scale-[1.02] active:scale-[0.98] ${
                           serviceId === s.id
                             ? "border-primary bg-primary-soft"
                             : "border-border hover:bg-muted"
@@ -242,7 +309,7 @@ export const Booking = ({ initialServiceId, onDone }: { initialServiceId?: strin
                           <button
                             key={d.date}
                             onClick={() => setDate(d.date)}
-                            className={`flex-shrink-0 snap-start px-3 py-2.5 rounded-lg border text-center min-w-[72px] transition-colors min-h-[44px] ${
+                            className={`flex-shrink-0 snap-start px-3 py-2.5 rounded-lg border text-center min-w-[72px] transition-all min-h-[44px] cursor-pointer hover:scale-[1.02] active:scale-[0.98] ${
                               date === d.date
                                 ? "border-primary bg-primary text-primary-foreground"
                                 : "border-border hover:bg-muted"
@@ -263,7 +330,7 @@ export const Booking = ({ initialServiceId, onDone }: { initialServiceId?: strin
                           <button
                             key={tm}
                             onClick={() => setTime(tm)}
-                            className={`py-2.5 text-sm rounded-md border transition-colors min-h-[44px] ${
+                            className={`py-2.5 text-sm rounded-md border transition-all min-h-[44px] cursor-pointer hover:scale-[1.02] active:scale-[0.98] ${
                               time === tm
                                 ? "border-primary bg-primary text-primary-foreground"
                                 : "border-border hover:bg-muted"
@@ -285,9 +352,13 @@ export const Booking = ({ initialServiceId, onDone }: { initialServiceId?: strin
                         id="bn"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
+                        onBlur={() => handleBlur("name")}
                         placeholder="Анна"
-                        className="text-base h-11"
+                        className={`text-base h-11 ${touched["name"] && fieldErrors["name"] ? "border-destructive" : ""}`}
                       />
+                      {touched["name"] && fieldErrors["name"] && (
+                        <p className="text-xs text-destructive mt-1">{fieldErrors["name"]}</p>
+                      )}
                     </div>
                     <div>
                       <Label htmlFor="bp">{t("booking_phone")}</Label>
@@ -295,9 +366,13 @@ export const Booking = ({ initialServiceId, onDone }: { initialServiceId?: strin
                         id="bp"
                         value={phone}
                         onChange={(e) => setPhone(e.target.value)}
+                        onBlur={() => handleBlur("phone")}
                         placeholder="+7 999 000 00 00"
-                        className="text-base h-11"
+                        className={`text-base h-11 ${touched["phone"] && fieldErrors["phone"] ? "border-destructive" : ""}`}
                       />
+                      {touched["phone"] && fieldErrors["phone"] && (
+                        <p className="text-xs text-destructive mt-1">{fieldErrors["phone"]}</p>
+                      )}
                     </div>
                     <div>
                       <Label htmlFor="be">{t("booking_email")}</Label>
@@ -306,9 +381,13 @@ export const Booking = ({ initialServiceId, onDone }: { initialServiceId?: strin
                         type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
+                        onBlur={() => handleBlur("email")}
                         placeholder="you@mail.ru"
-                        className="text-base h-11"
+                        className={`text-base h-11 ${touched["email"] && fieldErrors["email"] ? "border-destructive" : ""}`}
                       />
+                      {touched["email"] && fieldErrors["email"] && (
+                        <p className="text-xs text-destructive mt-1">{fieldErrors["email"]}</p>
+                      )}
                     </div>
                   </div>
                 )}

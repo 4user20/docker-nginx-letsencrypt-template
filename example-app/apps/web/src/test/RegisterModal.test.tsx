@@ -64,4 +64,19 @@ describe("RegisterModal", () => {
       screen.getByRole("button", { name: "Sign in" })
     ).toBeInTheDocument();
   });
+
+  it("renders admin demo checkbox", () => {
+    render(
+      <QueryClientProvider client={queryClient}>
+        <LocaleProvider>
+          <AuthProvider>
+            <RegisterModal open={true} onOpenChange={vi.fn()} onSwitchToLogin={vi.fn()} />
+          </AuthProvider>
+        </LocaleProvider>
+      </QueryClientProvider>
+    );
+    expect(
+      screen.getByRole("checkbox", { name: /admin demo/i })
+    ).toBeInTheDocument();
+  });
 });

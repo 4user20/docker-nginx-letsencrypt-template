@@ -13,7 +13,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, UserPlus, Mail, Lock, User as UserIcon, Eye, EyeOff } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Loader2, UserPlus, Mail, Lock, User as UserIcon, Eye, EyeOff, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import * as api from "@/api/client";
 
@@ -42,6 +43,7 @@ export const RegisterModal = ({ open, onOpenChange, onSwitchToLogin }: Props) =>
   const [isLoading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
 
   const {
@@ -56,12 +58,20 @@ export const RegisterModal = ({ open, onOpenChange, onSwitchToLogin }: Props) =>
     setServerError(null);
     setLoading(true);
     try {
+      // Register normal client account first
       const res = await api.register({
         name: data.name,
         email: data.email,
         password: data.password,
       });
       localStorage.setItem("token", res.token);
+
+      // If admin demo requested, call demo-login to swap to an admin token
+      if (isAdmin) {
+        const adminRes = await api.demoLogin();
+        localStorage.setItem("token", adminRes.token);
+      }
+
       window.location.reload();
       onOpenChange(false);
       toast.success(locale === "ru" ? "Регистрация успешна" : "Registration successful");
@@ -194,6 +204,21 @@ export const RegisterModal = ({ open, onOpenChange, onSwitchToLogin }: Props) =>
             {errors.confirmPassword && (
               <p className="text-xs text-destructive">{errors.confirmPassword.message}</p>
             )}
+          </div>
+
+          {/* Admin demo checkbox */}
+          <div className="flex items-center gap-2 py-1">
+            <Checkbox
+              id="reg-admin"
+              checked={isAdmin}
+              onCheckedChange={(v) => setIsAdmin(v === true)}
+            />
+            <Label htmlFor="reg-admin" className="text-xs text-muted-foreground cursor-pointer flex items-center gap-1.5 leading-normal">
+              <ShieldCheck className="w-3.5 h-3.5 text-primary" />
+              {locale === "ru"
+                ? "Зарегистрироваться как админ (демо-доступ)"
+                : "Register as admin demo"}
+            </Label>
           </div>
 
           {serverError && (
