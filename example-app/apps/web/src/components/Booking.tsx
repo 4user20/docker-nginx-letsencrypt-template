@@ -286,9 +286,9 @@ export const Booking = ({ initialServiceId, onDone }: { initialServiceId?: strin
                       <button
                         key={s.id}
                         onClick={() => setServiceId(s.id)}
-                        className={`text-left p-4 rounded-lg border transition-all min-h-[80px] cursor-pointer hover:scale-[1.02] active:scale-[0.98] ${
+                         className={`text-left p-4 rounded-lg border transition-all min-h-[80px] cursor-pointer hover:scale-[1.02] active:scale-[0.98] ${
                           serviceId === s.id
-                            ? "border-primary bg-primary-soft"
+                            ? "border-primary/50 bg-primary/10"
                             : "border-border hover:bg-muted"
                         }`}
                       >
@@ -314,9 +314,9 @@ export const Booking = ({ initialServiceId, onDone }: { initialServiceId?: strin
                           <button
                             key={d.date}
                             onClick={() => setDate(d.date)}
-                            className={`flex-shrink-0 snap-start px-3 py-2.5 rounded-lg border text-center min-w-[72px] transition-all min-h-[44px] cursor-pointer hover:scale-[1.02] active:scale-[0.98] ${
+                             className={`flex-shrink-0 snap-start px-3 py-2.5 rounded-lg border text-center min-w-[72px] transition-all min-h-[44px] cursor-pointer hover:scale-[1.02] active:scale-[0.98] ${
                               date === d.date
-                                ? "border-primary bg-primary text-primary-foreground"
+                                ? "border-primary/50 bg-primary/10 text-primary"
                                 : "border-border hover:bg-muted"
                             }`}
                           >
@@ -335,9 +335,9 @@ export const Booking = ({ initialServiceId, onDone }: { initialServiceId?: strin
                           <button
                             key={tm}
                             onClick={() => setTime(tm)}
-                            className={`py-2.5 text-sm rounded-md border transition-all min-h-[44px] cursor-pointer hover:scale-[1.02] active:scale-[0.98] ${
+                             className={`py-2.5 text-sm rounded-md border transition-all min-h-[44px] cursor-pointer hover:scale-[1.02] active:scale-[0.98] ${
                               time === tm
-                                ? "border-primary bg-primary text-primary-foreground"
+                                ? "border-primary/50 bg-primary/10 text-primary"
                                 : "border-border hover:bg-muted"
                             }`}
                           >
