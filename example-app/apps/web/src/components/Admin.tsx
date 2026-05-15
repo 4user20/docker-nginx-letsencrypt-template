@@ -294,26 +294,20 @@ export const Admin = () => {
               </div>
               <div className="flex gap-1 p-1 bg-muted rounded-md overflow-x-auto">
                 {filters.map((f) => (
-                  <button
-                    key={f.id}
-                    onClick={() => setFilter(f.id)}
-                    className={`px-2.5 md:px-3 py-1.5 text-xs font-medium rounded transition-colors whitespace-nowrap min-h-[36px] flex items-center gap-1.5 ${
-                      filter === f.id
-                        ? "bg-card shadow-sm text-foreground"
-                        : "text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    {t(f.key)}
-                    {filterCounts[f.id as keyof typeof filterCounts] > 0 && (
-                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${
-                        filter === f.id
-                          ? "bg-primary-soft text-primary"
-                          : "bg-muted-foreground/10 text-muted-foreground"
-                      }`}>
-                        {filterCounts[f.id as keyof typeof filterCounts]}
-                      </span>
-                    )}
-                  </button>
+                      <button
+                        key={f.id}
+                        onClick={() => setFilter(f.id)}
+                        className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 ${
+                          filter === f.id
+                            ? "bg-primary-soft text-primary shadow-sm ring-1 ring-primary/20"
+                            : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                        }`}
+                      >
+                        {t(f.labelKey as any)}
+                        {f.count !== undefined && f.count >= 0 && (
+                          <span className="ml-1.5 text-[10px] opacity-60">({f.count})</span>
+                        )}
+                      </button>
                 ))}
                 {/* Clear filter button */}
                 {hasActiveFilter && (
