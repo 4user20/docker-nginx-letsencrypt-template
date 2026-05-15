@@ -1,7 +1,8 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useLocale } from "@/providers/LocaleProvider";
 import { useBookings, services, formatRub, type BookingStatus, type Service, type Booking } from "@/providers/BookingsProvider";
 import { useAuth } from "@/providers/AuthProvider";
+import * as api from "@/api/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -47,7 +48,7 @@ const Counter = ({ value, suffix = "" }: { value: number | string; suffix?: stri
   const target = typeof value === "number" ? value : parseInt(String(value).replace(/[^0-9]/g, "")) || 0;
   const isString = typeof value === "string" && isNaN(Number(value));
 
-  useMemo(() => {
+  useEffect(() => {
     if (isString) return;
     const duration = 800;
     const steps = 20;
@@ -622,14 +623,14 @@ export const Admin = () => {
             <h3 className="text-lg font-semibold">
               {locale === "ru" ? "Управление услугами" : "Service Management"}
             </h3>
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground ml-2">
-              {locale === "ru" ? "только просмотр" : "read-only"}
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-success-soft text-success ml-2">
+              {locale === "ru" ? "редактирование" : "editable"}
             </span>
           </div>
           <p className="text-xs text-muted-foreground">
             {locale === "ru"
-              ? "Редактирование названий и цен станет доступно после подключения бэкенда."
-              : "Editing names and prices will be available after backend integration."}
+              ? "Изменения сохраняются через PUT /api/services/:id."
+              : "Changes are saved via PUT /api/services/:id."}
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {services.map((s) => (
@@ -654,19 +655,31 @@ export const Admin = () => {
   );
 };
 
-// ── C3: Service row with inline edit UI (read-only for now) ──
+// ── C3: Service row with inline edit UI ──
 const ServiceRow = ({ service }: { service: Service }) => {
   const { locale } = useLocale();
   const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [name, setName] = useState(locale === "ru" ? service.titleRu : service.titleEn);
   const [price, setPrice] = useState(String(service.priceFromRub));
 
-  const handleSave = () => {
-    // No backend endpoint yet — just show toast
-    toast.info(
-      locale === "ru" ? "API для обновления услуг ещё не реализован" : "Service update API not implemented yet",
-    );
-    setEditing(false);
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const titleRu = locale === "ru" ? name : service.titleRu;
+      const titleEn = locale === "en" ? name : service.titleEn;
+      await api.updateService(service.id, {
+        titleRu,
+        titleEn,
+        priceFromRub: parseInt(price, 10) || service.priceFromRub,
+      });
+      toast.success(locale === "ru" ? "Услуга обновлена" : "Service updated");
+      setEditing(false);
+    } catch {
+      toast.error(locale === "ru" ? "Ошибка обновления" : "Failed to update service");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -693,8 +706,9 @@ const ServiceRow = ({ service }: { service: Service }) => {
               <span className="text-xs text-muted-foreground">₽</span>
             </div>
             <div className="flex gap-1">
-              <Button size="sm" variant="default" className="h-7 gap-1 text-xs" onClick={handleSave}>
-                <Save className="w-3 h-3" /> {locale === "ru" ? "Сохранить" : "Save"}
+              <Button size="sm" variant="default" className="h-7 gap-1 text-xs" onClick={handleSave} disabled={saving}>
+                {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
+                {locale === "ru" ? "Сохранить" : "Save"}
               </Button>
               <Button size="sm" variant="ghost" className="h-7 gap-1 text-xs" onClick={() => setEditing(false)}>
                 <X className="w-3 h-3" />

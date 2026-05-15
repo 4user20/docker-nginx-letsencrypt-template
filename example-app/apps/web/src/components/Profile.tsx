@@ -55,7 +55,7 @@ export const Profile = () => {
   }
 
   const myBookings = bookings.filter(
-    (b) => b.clientEmail === user?.email || b.id.startsWith("b") === false || b.clientName === user?.name,
+    (b) => b.clientEmail === user?.email || b.clientName === user?.name,
   );
   const list = myBookings.length ? myBookings : bookings.slice(0, 2);
   const active = list.find((b) => b.status === "new" || b.status === "paid");
@@ -91,14 +91,16 @@ export const Profile = () => {
           </div>
         </div>
         <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setExpireOpen(true)}
-            className="gap-1.5"
-          >
-            <AlertTriangle className="w-4 h-4" /> {t("profile_expire")}
-          </Button>
+          {import.meta.env.DEV && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setExpireOpen(true)}
+              className="gap-1.5"
+            >
+              <AlertTriangle className="w-4 h-4" /> {t("profile_expire")}
+            </Button>
+          )}
           <Button variant="ghost" size="sm" onClick={() => setLogoutOpen(true)}>
             {t("profile_logout")}
           </Button>

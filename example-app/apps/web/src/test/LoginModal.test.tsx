@@ -64,7 +64,7 @@ describe("LoginModal", () => {
     expect(registerBtn).toBeInTheDocument();
   });
 
-  it("shows demo login button", () => {
+  it("shows demo access link below register", () => {
     render(
       <QueryClientProvider client={queryClient}>
         <LocaleProvider>
@@ -74,8 +74,8 @@ describe("LoginModal", () => {
         </LocaleProvider>
       </QueryClientProvider>
     );
-    expect(
-      screen.getByRole("button", { name: "Sign in with demo" })
-    ).toBeInTheDocument();
+    // Demo is now a simple text link, not a prominent button
+    const demoLink = screen.getByRole("button", { name: "Demo access →" });
+    expect(demoLink).toBeInTheDocument();
   });
 });

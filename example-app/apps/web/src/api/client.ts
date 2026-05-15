@@ -88,12 +88,6 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 
 // ── Auth ───────────────────────────────────────
 
-export const login = (email: string) =>
-  request<AuthResponse>("/api/auth/login", {
-    method: "POST",
-    body: JSON.stringify({ email }),
-  });
-
 export const demoLogin = () =>
   request<AuthResponse>("/api/auth/demo-login", {
     method: "POST",
@@ -123,6 +117,12 @@ export const logout = () =>
 
 export const getServices = () =>
   request<{ services: Service[] }>("/api/services");
+
+export const updateService = (id: string, data: { titleRu?: string; titleEn?: string; priceFromRub?: number }) =>
+  request<{ service: Service }>(`/api/services/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
 
 // ── Bookings ───────────────────────────────────
 

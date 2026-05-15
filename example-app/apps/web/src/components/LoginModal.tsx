@@ -14,7 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, LogIn, Mail, Lock, Sparkles, Eye, EyeOff } from "lucide-react";
+import { Loader2, LogIn, Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 
 const loginSchema = z.object({
@@ -164,16 +164,6 @@ export const LoginModal = ({ open, onOpenChange, onSwitchToRegister }: Props) =>
             </div>
           </div>
 
-          <Button
-            variant="outline"
-            className="w-full gap-2"
-            onClick={handleDemoLogin}
-            disabled={isLoading}
-          >
-            <Sparkles className="w-4 h-4" />
-            {t("auth_demo_link")}
-          </Button>
-
           <p className="text-center text-xs text-muted-foreground">
             {t("auth_no_account")}{" "}
             <button
@@ -184,6 +174,17 @@ export const LoginModal = ({ open, onOpenChange, onSwitchToRegister }: Props) =>
               {t("auth_register_link")}
             </button>
           </p>
+
+          <div className="text-center">
+            <button
+              type="button"
+              onClick={handleDemoLogin}
+              disabled={isLoading}
+              className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2 transition-colors"
+            >
+              {locale === "ru" ? "Демо-доступ →" : "Demo access →"}
+            </button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

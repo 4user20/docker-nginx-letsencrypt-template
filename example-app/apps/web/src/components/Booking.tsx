@@ -22,6 +22,8 @@ import {
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { ReceiptModal } from "@/components/ReceiptModal";
+import { LoginModal } from "@/components/LoginModal";
+import { RegisterModal } from "@/components/RegisterModal";
 
 const TIMES = ["10:00", "11:30", "13:00", "14:30", "16:00", "17:30", "19:00"];
 
@@ -62,7 +64,7 @@ export const Booking = ({ initialServiceId, onDone }: { initialServiceId?: strin
   const [step, setStep] = useState(0);
   const [direction, setDirection] = useState(0);
   const prevStepRef = useRef(step);
-  const [serviceId, setServiceId] = useState(initialServiceId ?? services[1].id);
+  const [serviceId, setServiceId] = useState(initialServiceId ?? services[0]?.id ?? "");
   const [date, setDate] = useState<string>("");
   const [time, setTime] = useState<string>("");
   const [name, setName] = useState(user?.name ?? "");
@@ -72,6 +74,8 @@ export const Booking = ({ initialServiceId, onDone }: { initialServiceId?: strin
   const [bookingId, setBookingId] = useState<string | null>(null);
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
+  const [loginOpen, setLoginOpen] = useState(false);
+  const [registerOpen, setRegisterOpen] = useState(false);
   const [idempotencyKey, setIdempotencyKey] = useState<string | null>(null);
   const [paymentMeta, setPaymentMeta] = useState<{ paymentId: string; idempotencyKey: string } | null>(null);
   const [receiptOpen, setReceiptOpen] = useState(false);
@@ -87,7 +91,8 @@ export const Booking = ({ initialServiceId, onDone }: { initialServiceId?: strin
   }, [step]);
 
   const days = useMemo(() => nextDays(10), []);
-  const service = services.find((s) => s.id === serviceId)!;
+  const service = services.find((s) => s.id === serviceId);
+  if (!service) return null;
 
   // ── Real-time validation ──
   const fieldErrors = useMemo(() => {
@@ -246,7 +251,7 @@ export const Booking = ({ initialServiceId, onDone }: { initialServiceId?: strin
                   variant="ghost"
                   size="sm"
                   className="h-7 px-2 text-xs gap-1"
-                  onClick={() => setShowAuthPrompt(true)}
+                  onClick={() => setLoginOpen(true)}
                 >
                   <LogIn className="w-3 h-3" />
                   {locale === "ru" ? "Войти" : "Sign in"}
@@ -255,7 +260,7 @@ export const Booking = ({ initialServiceId, onDone }: { initialServiceId?: strin
                   variant="ghost"
                   size="sm"
                   className="h-7 px-2 text-xs"
-                  onClick={() => setShowAuthPrompt(true)}
+                  onClick={() => setShowAuthPrompt(false)}
                 >
                   <X className="w-3 h-3" />
                 </Button>
@@ -527,6 +532,18 @@ export const Booking = ({ initialServiceId, onDone }: { initialServiceId?: strin
           onClose={() => setReceiptOpen(false)}
         />
       )}
+
+      {/* Auth Modals */}
+      <LoginModal
+        open={loginOpen}
+        onOpenChange={setLoginOpen}
+        onSwitchToRegister={() => { setLoginOpen(false); setRegisterOpen(true); }}
+      />
+      <RegisterModal
+        open={registerOpen}
+        onOpenChange={setRegisterOpen}
+        onSwitchToLogin={() => { setRegisterOpen(false); setLoginOpen(true); }}
+      />
     </section>
   );
 };

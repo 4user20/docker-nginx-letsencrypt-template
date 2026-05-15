@@ -65,7 +65,7 @@ describe("RegisterModal", () => {
     ).toBeInTheDocument();
   });
 
-  it("renders admin demo checkbox", () => {
+  it("does not render admin demo checkbox (removed)", () => {
     render(
       <QueryClientProvider client={queryClient}>
         <LocaleProvider>
@@ -76,7 +76,7 @@ describe("RegisterModal", () => {
       </QueryClientProvider>
     );
     expect(
-      screen.getByRole("checkbox", { name: /admin demo/i })
-    ).toBeInTheDocument();
+      screen.queryByRole("checkbox", { name: /admin demo/i })
+    ).not.toBeInTheDocument();
   });
 });

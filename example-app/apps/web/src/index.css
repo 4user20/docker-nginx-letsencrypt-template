@@ -29,7 +29,7 @@
 
     --success: 152 60% 42%;
     --success-soft: 152 60% 94%;
-    --warning: 38 92% 50%;
+    --warning: 38 92% 40%;
     --warning-soft: 38 92% 95%;
 
     --destructive: 0 72% 55%;
@@ -89,8 +89,8 @@
   body {
     @apply bg-background text-foreground;
     background-image:
-      radial-gradient(ellipse 80% 50% at 50% -10%, hsl(244 80% 96%) 0%, transparent 50%),
-      radial-gradient(ellipse 60% 40% at 90% 10%, hsl(262 80% 97%) 0%, transparent 60%);
+      radial-gradient(ellipse 80% 50% at 50% -10%, hsl(244 80% 94%) 0%, transparent 50%),
+      radial-gradient(ellipse 60% 40% at 90% 10%, hsl(262 80% 95%) 0%, transparent 60%);
   }
   .dark body,
   body.dark {
@@ -103,10 +103,10 @@
   }
   .gradient-text {
     @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(135deg, hsl(244 60% 52%), hsl(262 65% 60%), hsl(280 60% 55%));
+    background-image: linear-gradient(135deg, hsl(244 60% 52%), hsl(200 80% 50%), hsl(262 65% 60%));
   }
   .dark .gradient-text {
-    background-image: linear-gradient(135deg, hsl(244 70% 65%), hsl(262 70% 70%), hsl(280 65% 65%));
+    background-image: linear-gradient(135deg, hsl(244 70% 65%), hsl(200 80% 60%), hsl(262 70% 70%));
   }
 }
 

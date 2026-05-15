@@ -122,6 +122,7 @@ export const Landing = ({ onNavigate }: { onNavigate: (id: string) => void }) =>
                 {["10:00", "11:30", "14:00", "15:30", "17:00", "19:00"].map((time, i) => (
                   <button
                     key={time}
+                    onClick={() => onNavigate("booking")}
                     className={`text-sm py-2 rounded-md border transition-colors ${
                       i === 1
                         ? "bg-primary text-primary-foreground border-primary"
