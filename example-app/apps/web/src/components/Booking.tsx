@@ -212,8 +212,8 @@ export const Booking = ({ initialServiceId, onDone }: { initialServiceId?: strin
                 >
                   {i < step ? <Check className="w-3.5 h-3.5" /> : i + 1}
                 </motion.div>
-                <span className={`text-xs sm:text-sm whitespace-nowrap ${i === step ? "font-semibold" : "text-muted-foreground"}`}>
-                  {label}
+                <span className="hidden sm:inline text-xs sm:text-sm whitespace-nowrap">
+                  <span className={i === step ? "font-semibold" : "text-muted-foreground"}>{label}</span>
                 </span>
                 {i < stepLabels.length - 1 && (
                   <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4 text-muted-foreground flex-shrink-0" />
@@ -250,7 +250,7 @@ export const Booking = ({ initialServiceId, onDone }: { initialServiceId?: strin
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-7 px-2 text-xs gap-1"
+                  className="h-9 px-3 text-xs gap-1 min-h-[44px]"
                   onClick={() => setLoginOpen(true)}
                 >
                   <LogIn className="w-3 h-3" />
@@ -330,7 +330,7 @@ export const Booking = ({ initialServiceId, onDone }: { initialServiceId?: strin
                       <Label className="mb-2 flex items-center gap-1.5">
                         <Clock className="w-4 h-4" /> {locale === "ru" ? "Время" : "Time"}
                       </Label>
-                      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-7 gap-2">
+                      <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2">
                         {TIMES.map((tm) => (
                           <button
                             key={tm}
@@ -463,19 +463,19 @@ export const Booking = ({ initialServiceId, onDone }: { initialServiceId?: strin
           </div>
 
           {step < 3 && (
-            <div className="flex justify-between mt-8 gap-3">
+            <div className="flex flex-col-reverse sm:flex-row justify-between mt-8 gap-3">
               <Button
                 variant="ghost"
                 onClick={() => setStep(Math.max(0, step - 1))}
                 disabled={step === 0}
-                className="min-h-[44px]"
+                className="min-h-[44px] w-full sm:w-auto"
               >
                 <ChevronLeft className="w-4 h-4 mr-1" /> {t("booking_back")}
               </Button>
               <Button
                 onClick={() => (step === 2 ? submitBooking() : setStep(step + 1))}
                 disabled={!canNext[step]}
-                className="min-h-[44px]"
+                className="min-h-[44px] w-full sm:w-auto"
               >
                 {t("booking_next")} <ChevronRight className="w-4 h-4 ml-1" />
               </Button>

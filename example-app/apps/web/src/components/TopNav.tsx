@@ -63,7 +63,7 @@ export const TopNav = ({ active, onNavigate }: Props) => {
 
   return (
     <header className="sticky top-0 z-40 glass">
-      <div className="container flex h-16 items-center gap-2">
+      <div className="container flex h-14 sm:h-16 items-center gap-1 sm:gap-2">
         {/* Logo */}
         <button
           onClick={() => handleNav("home")}
@@ -72,7 +72,7 @@ export const TopNav = ({ active, onNavigate }: Props) => {
           <span className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-primary text-primary-foreground">
             <Sparkles className="w-4 h-4" />
           </span>
-          <span className="text-sm sm:text-base">
+          <span className="text-xs sm:text-sm md:text-base truncate max-w-[120px] sm:max-w-none">
             SlotPay{" "}
             <span className="text-muted-foreground font-normal font-heading">Studio</span>
           </span>
@@ -186,7 +186,7 @@ export const TopNav = ({ active, onNavigate }: Props) => {
                         variant="outline"
                         size="sm"
                         onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                        className="w-full gap-2"
+                        className="w-full gap-2 min-h-[44px]"
                       >
                         {theme === "dark" ? (
                           <><Sun className="w-4 h-4" /> Light mode</>
@@ -205,7 +205,7 @@ export const TopNav = ({ active, onNavigate }: Props) => {
                           size="sm"
                           onClick={() => { setLoginOpen(true); setMobileOpen(false); }}
                           disabled={isLoading}
-                          className="w-full gap-1.5"
+                          className="w-full gap-1.5 min-h-[44px]"
                         >
                           <Sparkles className="w-4 h-4" />
                           {t("profile_login")}

@@ -42,7 +42,7 @@ export const Services = ({ onChoose }: { onChoose: (serviceId: string) => void }
           >
             <TiltCard tiltDegree={4}>
               <div
-                className={`soft-card p-5 md:p-6 flex flex-col gap-3 md:gap-4 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden group ${
+                className={`soft-card p-4 md:p-6 flex flex-col gap-3 md:gap-4 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden group ${
                   i === 1 ? "ring-1 ring-primary/40" : ""
                 }`}
               >
@@ -58,7 +58,7 @@ export const Services = ({ onChoose }: { onChoose: (serviceId: string) => void }
                   </span>
                 )}
                 <div className="relative z-10">
-                  <h3 className="font-semibold text-base md:text-lg leading-snug">
+                  <h3 className="font-semibold text-base md:text-lg leading-snug break-words">
                     {locale === "ru" ? s.titleRu : s.titleEn}
                   </h3>
                   <p className="text-sm text-muted-foreground mt-1 md:mt-2 leading-relaxed">

@@ -96,12 +96,12 @@ export const Profile = () => {
               variant="outline"
               size="sm"
               onClick={() => setExpireOpen(true)}
-              className="gap-1.5"
+              className="gap-1.5 min-h-[44px]"
             >
               <AlertTriangle className="w-4 h-4" /> {t("profile_expire")}
             </Button>
           )}
-          <Button variant="ghost" size="sm" onClick={() => setLogoutOpen(true)}>
+          <Button variant="ghost" size="sm" onClick={() => setLogoutOpen(true)} className="min-h-[44px]">
             {t("profile_logout")}
           </Button>
         </div>

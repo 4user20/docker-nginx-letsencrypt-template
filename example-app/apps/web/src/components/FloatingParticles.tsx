@@ -28,8 +28,9 @@ export const FloatingParticles = () => {
     resize();
     window.addEventListener("resize", resize);
 
-    // Init particles
-    const count = 20;
+    // Init particles — fewer on mobile to avoid covering content
+    const isMobile = window.innerWidth < 480;
+    const count = isMobile ? 6 : 20;
     particlesRef.current = Array.from({ length: count }, () => ({
       x: Math.random() * canvas.width,
       y: Math.random() * canvas.height,

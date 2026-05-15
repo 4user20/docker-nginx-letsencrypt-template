@@ -87,7 +87,8 @@
     -webkit-font-smoothing: antialiased;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground overflow-x-hidden;
+    -webkit-overflow-scrolling: touch;
     background-image:
       radial-gradient(ellipse 80% 50% at 50% -10%, hsl(244 80% 94%) 0%, transparent 50%),
       radial-gradient(ellipse 60% 40% at 90% 10%, hsl(262 80% 95%) 0%, transparent 60%);
@@ -100,6 +101,10 @@
   }
   .font-heading {
     font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  }
+  /* iOS zoom prevention: minimum 16px on inputs */
+  input, textarea, select {
+    @apply text-base;
   }
   .gradient-text {
     @apply bg-clip-text text-transparent;

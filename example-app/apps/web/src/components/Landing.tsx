@@ -52,7 +52,7 @@ export const Landing = ({ onNavigate }: { onNavigate: (id: string) => void }) =>
 
           <motion.h1
             variants={fadeSlideUp}
-            className="text-4xl md:text-6xl font-semibold tracking-tight leading-[1.05] gradient-text"
+            className="text-3xl sm:text-4xl md:text-6xl font-semibold tracking-tight leading-[1.05] gradient-text"
           >
             {t("hero_title")}
           </motion.h1>
@@ -64,12 +64,12 @@ export const Landing = ({ onNavigate }: { onNavigate: (id: string) => void }) =>
             {t("hero_sub")}
           </motion.p>
 
-          <motion.div variants={fadeSlideUp} className="flex flex-wrap gap-3">
-            <Button size="lg" onClick={() => onNavigate("booking")} className="gap-2 group">
+          <motion.div variants={fadeSlideUp} className="flex flex-col sm:flex-row flex-wrap gap-3">
+            <Button size="lg" onClick={() => onNavigate("booking")} className="gap-2 group w-full sm:w-auto min-h-[44px]">
               {t("hero_cta_primary")}
               <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
             </Button>
-            <Button size="lg" variant="outline" onClick={() => onNavigate("admin")}>
+            <Button size="lg" variant="outline" onClick={() => onNavigate("admin")} className="w-full sm:w-auto min-h-[44px]">
               {t("hero_cta_secondary")}
             </Button>
           </motion.div>
@@ -124,7 +124,7 @@ export const Landing = ({ onNavigate }: { onNavigate: (id: string) => void }) =>
                   <button
                     key={time}
                     onClick={() => onNavigate("booking")}
-                    className={`text-sm py-2 rounded-md border transition-colors ${
+                    className={`text-sm py-2 rounded-md border transition-colors min-h-[44px] ${
                       i === 1
                         ? "bg-primary text-primary-foreground border-primary"
                         : "border-border hover:bg-muted"
@@ -141,7 +141,7 @@ export const Landing = ({ onNavigate }: { onNavigate: (id: string) => void }) =>
                   <div className="text-xs text-muted-foreground">{t("widget_total")}</div>
                   <div className="text-2xl font-semibold">{formatRub(slot.depositRub)}</div>
                 </div>
-                <Button onClick={() => onNavigate("booking")} className="gap-1.5">
+                <Button onClick={() => onNavigate("booking")} className="gap-1.5 min-h-[44px]">
                   <CreditCard className="w-4 h-4" /> {t("hero_cta_primary")}
                 </Button>
               </div>
@@ -149,7 +149,7 @@ export const Landing = ({ onNavigate }: { onNavigate: (id: string) => void }) =>
           </div>
 
           <motion.div
-            className="grid grid-cols-3 gap-3 mt-3"
+            className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.8, duration: 0.4 }}

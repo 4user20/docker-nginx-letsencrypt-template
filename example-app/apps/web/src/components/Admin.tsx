@@ -297,7 +297,7 @@ export const Admin = () => {
                       <button
                         key={f.id}
                         onClick={() => setFilter(f.id)}
-                        className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 ${
+                        className={`flex-shrink-0 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 ${
                           filter === f.id
                             ? "bg-primary-soft text-primary shadow-sm ring-1 ring-primary/20"
                             : "text-muted-foreground hover:text-foreground hover:bg-muted"
@@ -365,7 +365,7 @@ export const Admin = () => {
                             value={b.status}
                             onValueChange={(v) => handleStatusChange(b.id, v as BookingStatus)}
                           >
-                            <SelectTrigger className="h-9 w-28 text-xs">
+                            <SelectTrigger className="h-9 w-28 text-xs min-h-[44px]">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -456,7 +456,7 @@ export const Admin = () => {
                                 value={b.status}
                                 onValueChange={(v) => handleStatusChange(b.id, v as BookingStatus)}
                               >
-                                <SelectTrigger className="h-8 w-32 ml-auto text-xs">
+                                <SelectTrigger className="h-8 w-32 ml-auto text-xs min-h-[44px]">
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
