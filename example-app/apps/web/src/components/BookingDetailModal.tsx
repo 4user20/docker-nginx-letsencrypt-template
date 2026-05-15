@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useLocale } from "@/providers/LocaleProvider";
-import { services, formatRub, type Booking, type BookingStatus } from "@/providers/BookingsProvider";
+import { useBookings, formatRub, type Booking, type BookingStatus } from "@/providers/BookingsProvider";
 import {
   Dialog,
   DialogContent,
@@ -47,6 +47,7 @@ interface Props {
 
 export const BookingDetailModal = ({ booking, open, onClose, onStatusChange, onPay, paying }: Props) => {
   const { locale } = useLocale();
+  const { services } = useBookings();
   const service = services.find((s) => s.id === booking.serviceId);
 
   const statusColors: Record<BookingStatus, string> = {

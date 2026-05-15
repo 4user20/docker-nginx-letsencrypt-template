@@ -3,7 +3,7 @@ import { useLocale } from "@/providers/LocaleProvider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { services, formatRub, useBookings } from "@/providers/BookingsProvider";
+import { formatRub, useBookings } from "@/providers/BookingsProvider";
 import { useAuth } from "@/providers/AuthProvider";
 import {
   Check,
@@ -60,7 +60,7 @@ const stepVariants = {
 export const Booking = ({ initialServiceId, onDone }: { initialServiceId?: string; onDone: () => void }) => {
   const { t, locale } = useLocale();
   const { user } = useAuth();
-  const { addBooking, payBooking } = useBookings();
+  const { services, addBooking, payBooking } = useBookings();
   const [step, setStep] = useState(0);
   const [direction, setDirection] = useState(0);
   const prevStepRef = useRef(step);

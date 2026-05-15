@@ -76,19 +76,19 @@ async function main() {
     },
     {
       id: "svc_payment",
-      titleRu: "Mock / payment integration ready",
-      titleEn: "Mock / payment integration ready",
+      titleRu: "Платёжный модуль + интеграция",
+      titleEn: "Payment module + integration",
       descRu:
-        "Интеграция платёжного шлюза с поддержкой предоплат и полных оплат. Mock-режим для тестирования.",
+        "Интеграция платёжного шлюза с поддержкой предоплат и полных оплат. ЮKassa / CloudPayments.",
       descEn:
-        "Payment gateway integration with prepayment and full payment support. Mock mode for testing.",
+        "Payment gateway integration with prepayment and full payment support. YooKassa / CloudPayments.",
       priceFromRub: 90000,
       depositRub: 4000,
     },
     {
       id: "svc_miniapp",
-      titleRu: "Mini App / Telegram-ready интерфейс",
-      titleEn: "Mini App / Telegram-ready UI",
+      titleRu: "Telegram Mini App",
+      titleEn: "Telegram Mini App",
       descRu:
         "Telegram Mini App с интерфейсом бронирования и оплаты. Оптимизировано для мобильных устройств.",
       descEn:

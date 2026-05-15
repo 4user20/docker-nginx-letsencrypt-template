@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useLocale } from "@/providers/LocaleProvider";
 import { useAuth } from "@/providers/AuthProvider";
-import { useBookings, services, formatRub } from "@/providers/BookingsProvider";
+import { useBookings, formatRub } from "@/providers/BookingsProvider";
 import { Button } from "@/components/ui/button";
 import {
   Calendar,
@@ -33,7 +33,7 @@ const listItem = {
 export const Profile = () => {
   const { t, locale } = useLocale();
   const { user, isAuthenticated, demoLogin, logout, expireSession, isLoading } = useAuth();
-  const { bookings, isLoading: bookingsLoading } = useBookings();
+  const { bookings, services, isLoading: bookingsLoading } = useBookings();
   const [logoutOpen, setLogoutOpen] = useState(false);
   const [expireOpen, setExpireOpen] = useState(false);
 

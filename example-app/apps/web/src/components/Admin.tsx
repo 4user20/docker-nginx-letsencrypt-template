@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect } from "react";
 import { useLocale } from "@/providers/LocaleProvider";
-import { useBookings, services, formatRub, type BookingStatus, type Service, type Booking } from "@/providers/BookingsProvider";
+import { useBookings, formatRub, type BookingStatus, type Service, type Booking } from "@/providers/BookingsProvider";
 import { useAuth } from "@/providers/AuthProvider";
 import * as api from "@/api/client";
 import { Input } from "@/components/ui/input";
@@ -303,9 +303,9 @@ export const Admin = () => {
                             : "text-muted-foreground hover:text-foreground hover:bg-muted"
                         }`}
                       >
-                        {t(f.labelKey as any)}
-                        {f.count !== undefined && f.count >= 0 && (
-                          <span className="ml-1.5 text-[10px] opacity-60">({f.count})</span>
+                        {t(f.key)}
+                        {filterCounts[f.id] !== undefined && (
+                          <span className="ml-1.5 text-[10px] opacity-60">({filterCounts[f.id]})</span>
                         )}
                       </button>
                 ))}

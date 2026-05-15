@@ -2,10 +2,29 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { BookingDetailModal } from "@/components/BookingDetailModal";
 import { LocaleProvider } from "@/providers/LocaleProvider";
+import { BookingsProvider } from "@/providers/BookingsProvider";
+import { AuthProvider } from "@/providers/AuthProvider";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 vi.mock("sonner", () => ({
   toast: { success: vi.fn(), error: vi.fn(), info: vi.fn() },
 }));
+
+const qc = new QueryClient();
+
+function TestWrapper({ children }: { children: React.ReactNode }) {
+  return (
+    <QueryClientProvider client={qc}>
+      <LocaleProvider>
+        <AuthProvider>
+          <BookingsProvider>
+            {children}
+          </BookingsProvider>
+        </AuthProvider>
+      </LocaleProvider>
+    </QueryClientProvider>
+  );
+}
 
 const mockBooking = {
   id: "b_abc123",
@@ -31,7 +50,7 @@ const mockBookingPaid = {
 describe("BookingDetailModal", () => {
   it("renders booking client name and email when open", () => {
     render(
-      <LocaleProvider>
+      <TestWrapper>
         <BookingDetailModal
           booking={mockBooking}
           open={true}
@@ -40,7 +59,7 @@ describe("BookingDetailModal", () => {
           onPay={vi.fn()}
           paying={false}
         />
-      </LocaleProvider>
+      </TestWrapper>
     );
     // Name appears in the dialog title
     expect(screen.getByRole("heading", { name: "Анна Тестова" })).toBeInTheDocument();
@@ -50,23 +69,7 @@ describe("BookingDetailModal", () => {
 
   it("shows payment info when booking is paid", () => {
     render(
-      <LocaleProvider>
-        <BookingDetailModal
-          booking={mockBookingPaid}
-          open={true}
-          onClose={vi.fn()}
-          onStatusChange={vi.fn()}
-          onPay={vi.fn()}
-          paying={false}
-        />
-      </LocaleProvider>
-    );
-    expect(screen.getByText("pay_987xyz")).toBeInTheDocument();
-  });
-
-  it("renders status change select", () => {
-    render(
-      <LocaleProvider>
+      <TestWrapper>
         <BookingDetailModal
           booking={mockBooking}
           open={true}
@@ -75,7 +78,23 @@ describe("BookingDetailModal", () => {
           onPay={vi.fn()}
           paying={false}
         />
-      </LocaleProvider>
+      </TestWrapper>
+    );
+    expect(screen.getByText("pay_987xyz")).toBeInTheDocument();
+  });
+
+  it("renders status change select", () => {
+    render(
+      <TestWrapper>
+        <BookingDetailModal
+          booking={mockBooking}
+          open={true}
+          onClose={vi.fn()}
+          onStatusChange={vi.fn()}
+          onPay={vi.fn()}
+          paying={false}
+        />
+      </TestWrapper>
     );
     expect(screen.getByRole("combobox")).toBeInTheDocument();
   });

@@ -1,5 +1,5 @@
 import { useLocale } from "@/providers/LocaleProvider";
-import { services, formatRub, type Booking } from "@/providers/BookingsProvider";
+import { useBookings, formatRub, type Booking } from "@/providers/BookingsProvider";
 import {
   Dialog,
   DialogContent,
@@ -19,6 +19,7 @@ interface Props {
 
 export const ReceiptModal = ({ booking, paymentId, open, onClose }: Props) => {
   const { locale } = useLocale();
+  const { services } = useBookings();
   const service = services.find((s) => s.id === booking.serviceId);
   const date = new Date(booking.createdAt).toLocaleDateString(locale === "ru" ? "ru-RU" : "en-US", {
     year: "numeric",

@@ -1,18 +1,19 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, ReactNode } from "react";
 import * as api from "@/api/client";
 import { useAuth } from "./AuthProvider";
+import { services as mockServices } from "@/api/mock-data";
 
 export type BookingStatus = "new" | "paid" | "cancelled";
 
 // Re-export api types for convenience
 export type { Service, Booking, CreateBookingData } from "@/api/client";
-export { services } from "@/api/mock-data";
 
 export const formatRub = (n: number) =>
   new Intl.NumberFormat("ru-RU", { style: "currency", currency: "RUB", maximumFractionDigits: 0 }).format(n);
 
 interface BookingsCtx {
   bookings: api.Booking[];
+  services: api.Service[];
   isLoading: boolean;
   addBooking: (b: api.CreateBookingData) => { booking: api.Booking; idempotencyKey: string };
   setStatus: (id: string, status: BookingStatus) => void;
@@ -24,7 +25,15 @@ const Ctx = createContext<BookingsCtx | null>(null);
 export const BookingsProvider = ({ children }: { children: ReactNode }) => {
   const { isAuthenticated } = useAuth();
   const [bookings, setBookings] = useState<api.Booking[]>([]);
+  const [services, setServices] = useState<api.Service[]>(mockServices);
   const [isLoading, setLoading] = useState(false);
+
+  // Fetch services from API on mount (fall back to mock data)
+  useEffect(() => {
+    api.getServices()
+      .then((res) => { if (res.services.length > 0) setServices(res.services); })
+      .catch(() => { /* keep mock data */ });
+  }, []);
 
   // Fetch bookings from API when authenticated
   useEffect(() => {
@@ -89,8 +98,8 @@ export const BookingsProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const value = useMemo(
-    () => ({ bookings, isLoading, addBooking, setStatus, payBooking }),
-    [bookings, isLoading, addBooking, setStatus, payBooking],
+    () => ({ bookings, services, isLoading, addBooking, setStatus, payBooking }),
+    [bookings, services, isLoading, addBooking, setStatus, payBooking],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 };

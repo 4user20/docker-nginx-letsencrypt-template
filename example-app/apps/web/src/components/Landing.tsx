@@ -1,7 +1,7 @@
 import { useLocale } from "@/providers/LocaleProvider";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, CalendarCheck, CreditCard, ShieldCheck, User, Check, Clock, Sparkles } from "lucide-react";
-import { formatRub, services } from "@/providers/BookingsProvider";
+import { formatRub, useBookings } from "@/providers/BookingsProvider";
 import { AnimatedGradient } from "@/components/AnimatedGradient";
 import { FloatingParticles } from "@/components/FloatingParticles";
 import { motion } from "framer-motion";
@@ -27,6 +27,7 @@ const fadeSlideLeft = {
 
 export const Landing = ({ onNavigate }: { onNavigate: (id: string) => void }) => {
   const { t, locale } = useLocale();
+  const { services } = useBookings();
   const slot = services[1];
 
   return (

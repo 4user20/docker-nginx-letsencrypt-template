@@ -1,5 +1,5 @@
 import { useLocale } from "@/providers/LocaleProvider";
-import { services, formatRub } from "@/providers/BookingsProvider";
+import { useBookings, formatRub } from "@/providers/BookingsProvider";
 import { Button } from "@/components/ui/button";
 import { TiltCard } from "@/components/TiltCard";
 import { Check, Sparkles } from "lucide-react";
@@ -16,6 +16,7 @@ const cardVariants = {
 
 export const Services = ({ onChoose }: { onChoose: (serviceId: string) => void }) => {
   const { t, locale } = useLocale();
+  const { services } = useBookings();
   return (
     <section className="container py-8 md:py-16">
       <motion.div
